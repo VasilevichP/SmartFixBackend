@@ -49,6 +49,10 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
             user = User.CreateManager(request.Email, passwordHash);
         }
 
-        await _userRepository.AddAsync(user);
+        var numOfAddedEntities = await _userRepository.AddAsync(user);
+        if(numOfAddedEntities == 0) 
+        {
+            throw new Exception("Возникла ошибка при добавлении в базу данных");
+        }
     }
 }
