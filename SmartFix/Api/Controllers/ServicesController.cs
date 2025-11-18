@@ -1,6 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartFix.Application.Features.Services.Commands.ChangeVisibility;
+using SmartFix.Application.Features.Services.Commands.CreateService;
+using SmartFix.Application.Features.Services.Commands.DeleteService;
+using SmartFix.Application.Features.Services.Commands.UpdateService;
 using SmartFix.Application.Features.Services.Queries.GetAllForClient;
 using SmartFix.Application.Features.Services.Queries.GetAllForManager;
 
@@ -33,5 +37,37 @@ public class ServicesController : ControllerBase
         var query = new GetAllForManagerQuery();
         var result = await _mediator.Send(query);
         return Ok(result);
+    }
+    
+    [HttpPost]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> CreateService([FromBody] CreateServiceCommand command)
+    {
+        await _mediator.Send(command);
+        return Created();
+    }
+
+    [HttpPut]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> UpdateService([FromBody] UpdateServiceCommand command)
+    {
+        await _mediator.Send(command);
+        return Ok();
+    }
+  
+    [HttpPatch]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> ToggleVisibility( [FromBody] ToggleServiceVisibilityCommand command)
+    {
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [HttpDelete]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> DeleteService([FromBody] DeleteServiceCommand command)
+    {
+        await _mediator.Send(command);
+        return NoContent();
     }
 }

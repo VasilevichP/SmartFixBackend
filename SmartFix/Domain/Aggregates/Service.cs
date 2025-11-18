@@ -6,7 +6,7 @@ public class Service
     public string Name { get; private set; }
     public string? Description { get; private set; }
     public decimal Price { get; private set; }
-    public string? WarrantyPeriod { get; private set; }
+    public int WarrantyPeriod { get; private set; }
     public bool IsAvailable { get; private set; }
     public string? PhotoName { get; private set; }
     public string? PhotoPath { get; private set; }
@@ -16,7 +16,7 @@ public class Service
 
    private Service() { }
 
-    public static Service Create(string name, decimal price, Guid categoryId, string photoName, string photoPath, string? description = null, string? warrantyPeriod = null)
+    public static Service Create(string name, decimal price, Guid categoryId, string? description, int warrantyPeriod)
     {
         // Здесь можно добавить валидацию (цена > 0, имя не пустое и т.д.)
         return new Service
@@ -25,20 +25,19 @@ public class Service
             Name = name,
             Price = price,
             CategoryId = categoryId,
-            PhotoName = photoName,
-            PhotoPath = photoPath,
             Description = description,
             WarrantyPeriod = warrantyPeriod,
             IsAvailable = true
         };
     }
 
-    public void UpdateDetails(string name, decimal price, string? description, string? warrantyPeriod)
+    public void UpdateDetails(string name, decimal price, string? description, int warrantyPeriod, Boolean isAvailable)
     {
         Name = name;
         Price = price;
         Description = description;
         WarrantyPeriod = warrantyPeriod;
+        IsAvailable = isAvailable;
     }
 
     public void Hide()

@@ -5,23 +5,23 @@ public class ServiceCategory
     public Guid Id { get; private set; }
     public string Name { get; private set; }
 
-    // Навигационное свойство для EF Core
     private readonly List<Service> _services = new();
     public IReadOnlyCollection<Service> Services => _services.AsReadOnly();
+    
+    private ServiceCategory() { }
 
-    // Приватный конструктор для EF Core
-    private ServiceCategory()
-    {
-    }
-
-    // Фабричный метод для создания категории
     public static ServiceCategory Create(string name)
     {
-        // Здесь можно добавить валидацию, например, на пустую строку
+        // TODO: Добавить валидацию (например, имя не должно быть пустым)
         return new ServiceCategory
         {
-            Id = Guid.NewGuid(),
             Name = name
         };
+    }
+    
+    public void UpdateName(string newName)
+    {
+        // TODO: Добавить валидацию
+        Name = newName;
     }
 }

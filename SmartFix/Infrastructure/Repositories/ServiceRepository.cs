@@ -43,4 +43,9 @@ public class ServiceRepository : IServiceRepository
             .Include(s => s.Category)
             .ToListAsync(cancellationToken);
     }
+
+    public void Delete(Service service)
+    {
+        _context.Services.Remove(service);
+    }
 }

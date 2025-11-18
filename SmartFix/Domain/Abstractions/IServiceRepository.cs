@@ -9,4 +9,5 @@ public interface IServiceRepository
     void Update(Service service); 
     Task<List<Service>> GetAllForClientAsync(CancellationToken cancellationToken = default);
     Task<List<Service>> GetAllForManagerAsync(CancellationToken cancellationToken = default);
+    void Delete(Service service);
 }   
