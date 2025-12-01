@@ -14,8 +14,10 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Service> Services { get; set; }
     public DbSet<ServiceCategory> ServiceCategories { get; set; }
+    public DbSet<DeviceType> DeviceTypes { get; set; }
     public DbSet<Request> Requests { get; set; }
     public DbSet<StatusHistory> StatusHistories { get; set; }
+    public DbSet<RequestPhoto> RequestPhotos { get; set; }
     public DbSet<Specialist> Specialists { get; set; }
 
     [Obsolete("Obsolete")]
@@ -68,6 +70,43 @@ public class AppDbContext : DbContext
         {
             builder.HasKey(s => s.Id);
             builder.Property(s => s.FullName).IsRequired().HasMaxLength(255);
+        });
+        
+        modelBuilder.Entity<DeviceType>(builder =>
+        {
+            builder.HasKey(dt => dt.Id);
+            builder.Property(dt => dt.Name).IsRequired().HasMaxLength(100);
+        });
+        
+        modelBuilder.Entity<Request>(builder =>
+        {
+            builder.Property(r => r.DeviceModel).IsRequired().HasMaxLength(150);
+            
+            builder.HasOne(r => r.DeviceType)
+                .WithMany()
+                .HasForeignKey(r => r.DeviceTypeId);
+            builder.HasOne(r => r.Specialist)
+                .WithMany()
+                .HasForeignKey(r => r.SpecialistId)
+                .IsRequired(false); 
+            builder.HasMany(r => r.Photos)
+                .WithOne()
+                .HasForeignKey(p => p.RequestId);
+        });
+        
+        modelBuilder.Entity<RequestPhoto>(builder =>
+        {
+            builder.HasKey(p => p.Id);
+            builder.Property(p => p.FileName).IsRequired().HasMaxLength(255);
+            builder.Property(p => p.FilePath).IsRequired().HasMaxLength(500);
+        });
+        
+        modelBuilder.Entity<StatusHistory>(builder =>
+        {
+            builder.HasKey(h => h.Id);
+            builder.Property(h => h.Status)
+                .HasConversion<string>()
+                .HasMaxLength(50);
         });
     }
 }

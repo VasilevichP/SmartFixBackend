@@ -16,7 +16,7 @@ public class SpecialistRepository : ISpecialistRepository
 
     public async Task<Specialist?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Specialists.FindAsync(new object[] { id }, cancellationToken);
+        return await _context.Specialists.FirstOrDefaultAsync(s=>s.Id == id, cancellationToken);
     }
 
     public async Task<List<Specialist>> GetAllAsync(CancellationToken cancellationToken = default)

@@ -3,6 +3,6 @@ using SmartFix.Application.Features.ServiceCategories.DTO;
 
 namespace SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
 
-public class GetAllQuery : IRequest<List<ServiceCategoryDto>>
+public class GetAllCategoriesQuery : IRequest<List<ServiceCategoryDto>>
 {
 }

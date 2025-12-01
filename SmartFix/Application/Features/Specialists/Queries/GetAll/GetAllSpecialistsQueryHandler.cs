@@ -4,7 +4,7 @@ using SmartFix.Domain.Abstractions;
 
 namespace SmartFix.Application.Features.Specialists.Queries.GetAll;
 
-public class GetAllSpecialistsQueryHandler : IRequestHandler<GetAllQuery, List<SpecialistDto>>
+public class GetAllSpecialistsQueryHandler : IRequestHandler<GetAllSpecialistsQuery, List<SpecialistDto>>
 {
     private readonly ISpecialistRepository _specialistRepository;
 
@@ -13,7 +13,7 @@ public class GetAllSpecialistsQueryHandler : IRequestHandler<GetAllQuery, List<S
         _specialistRepository = specialistRepository;
     }
 
-    public async Task<List<SpecialistDto>> Handle(GetAllQuery request, CancellationToken cancellationToken)
+    public async Task<List<SpecialistDto>> Handle(GetAllSpecialistsQuery request, CancellationToken cancellationToken)
     {
         var specialists = await _specialistRepository.GetAllAsync(cancellationToken);
         return specialists

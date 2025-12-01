@@ -22,7 +22,7 @@ public class ServiceCategoriesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _mediator.Send(new GetAllQuery());
+        var result = await _mediator.Send(new GetAllCategoriesQuery());
         return Ok(result);
     }
     

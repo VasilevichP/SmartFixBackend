@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SmartFix.Application.Abstractions;
 using SmartFix.Application.Authentication;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Infrastructure.Authentication;
 using SmartFix.Infrastructure.Persistence;
 using SmartFix.Infrastructure.Repositories;
+using SmartFix.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +30,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
+builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
+builder.Services.AddScoped<IDeviceTypeRepository, DeviceTypeRepository>();
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -94,6 +100,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles(); 
 
 app.UseHttpsRedirection();
 app.UseCors("CORSSpecifications");

@@ -25,8 +25,7 @@ public class ServicesController : ControllerBase
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> GetClientServices()
     {
-        var query = new GetAllForClientQuery();
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetAllForClientQuery());
         return Ok(result);
     }
 
@@ -34,11 +33,10 @@ public class ServicesController : ControllerBase
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetManagerServices()
     {
-        var query = new GetAllForManagerQuery();
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetAllForManagerQuery());
         return Ok(result);
     }
-    
+
     [HttpPost]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> CreateService([FromBody] CreateServiceCommand command)
@@ -54,10 +52,10 @@ public class ServicesController : ControllerBase
         await _mediator.Send(command);
         return Ok();
     }
-  
+
     [HttpPatch]
     [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> ToggleVisibility( [FromBody] ToggleServiceVisibilityCommand command)
+    public async Task<IActionResult> ToggleVisibility([FromBody] ToggleServiceVisibilityCommand command)
     {
         await _mediator.Send(command);
         return NoContent();

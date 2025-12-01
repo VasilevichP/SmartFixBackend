@@ -5,6 +5,7 @@ using SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
 using SmartFix.Application.Features.Specialists.Commands.AddSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.DeleteSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.UpdateSpecialist;
+using SmartFix.Application.Features.Specialists.Queries.GetAll;
 
 namespace SmartFix.Api.Controllers;
 
@@ -23,7 +24,7 @@ public class SpecialistsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var result = await _mediator.Send(new GetAllQuery());
+        var result = await _mediator.Send(new GetAllSpecialistsQuery());
         return Ok(result);
     }
     
@@ -42,7 +43,7 @@ public class SpecialistsController : ControllerBase
     }
     
     [HttpDelete]
-    public async Task<IActionResult> Delete([FromBody] UpdateSpecialistCommand command)
+    public async Task<IActionResult> Delete([FromBody] DeleteSpecialistCommand command)
     {
         await _mediator.Send(command);
         return NoContent();

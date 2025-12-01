@@ -4,16 +4,16 @@ using SmartFix.Domain.Abstractions;
 
 namespace SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
 
-public class GetAllQueryHandler : IRequestHandler<GetAllQuery, List<ServiceCategoryDto>>
+public class GetAllCategoriesQueryHandler : IRequestHandler<GetAllCategoriesQuery, List<ServiceCategoryDto>>
 {
     private readonly IServiceCategoryRepository _categoryRepository;
 
-    public GetAllQueryHandler(IServiceCategoryRepository categoryRepository)
+    public GetAllCategoriesQueryHandler(IServiceCategoryRepository categoryRepository)
     {
         _categoryRepository = categoryRepository;
     }
 
-    public async Task<List<ServiceCategoryDto>> Handle(GetAllQuery request, CancellationToken cancellationToken)
+    public async Task<List<ServiceCategoryDto>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
     {
         var categories = await _categoryRepository.GetAllAsync(cancellationToken);
         
