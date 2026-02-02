@@ -20,7 +20,7 @@ public class GetAllRequestsQueryHandler: IRequestHandler<GetAllRequestsQuery, Li
         return requests.Select(r => new RequestsBriefDto
         {
             Id = r.Id,
-            ClientName = $"{r.Client.FirstName} {r.Client.LastName}",
+            ClientName = r.Client.Name,
             ServiceName = r.Service.Name,
             CreatedAt = r.CreatedAt,
             Status = r.Status,

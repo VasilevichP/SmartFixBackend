@@ -15,8 +15,8 @@ public class RequestDetailsDto
     public string Description { get; set; }
     
     // Информация об услуге
-    public string ServiceName { get; set; }
-    public decimal Price { get; set; }
+    public string? ServiceName { get; set; }
+    public decimal? Price { get; set; }
     public int WarrantyPeriod { get; set; }
     // Даты
     public DateTime CreatedAt { get; set; }

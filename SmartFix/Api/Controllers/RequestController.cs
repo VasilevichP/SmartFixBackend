@@ -30,7 +30,7 @@ public class RequestsController : ControllerBase
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
         {
-            return Unauthorized("Не удалось определить пользователя.");
+            return Unauthorized("Не удалось определить пользователя");
         }
         command.ClientId = userId;
         var requestId = await _mediator.Send(command);
@@ -39,15 +39,14 @@ public class RequestsController : ControllerBase
     
     [HttpGet("client_requests")]
     [Authorize(Roles = "Client")]
-    public async Task<IActionResult> GetMyRequests([FromBody] GetClientRequestsQuery query)
+    public async Task<IActionResult> GetMyRequests()
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdString, out var userId))
         {
-            return Unauthorized();
+            return Unauthorized("Не удалось определить пользователя");
         }
-        query.ClientId = userId;
-        var result = await _mediator.Send(query);
+        var result = await _mediator.Send(new GetClientRequestsQuery(){ClientId = userId});
         
         return Ok(result);
     }

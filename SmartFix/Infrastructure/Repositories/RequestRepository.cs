@@ -19,6 +19,8 @@ public class RequestRepository:IRequestRepository
         return await _context.Requests
             .Include(r => r.Service)
             .Include(r => r.Client)
+            .Include(r=>r.DeviceType)
+            .Include(r=>r.Specialist)
             .Include(r => r.StatusHistories)
             .Include(r => r.Photos) 
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -40,6 +42,7 @@ public class RequestRepository:IRequestRepository
             .Include(r => r.Service)
             .OrderByDescending(r => r.CreatedAt)
             .Where(r=>r.ClientId == clientId)
+            .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     }
     public void Update(Request request)

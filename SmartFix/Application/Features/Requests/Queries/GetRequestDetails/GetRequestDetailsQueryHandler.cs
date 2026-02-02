@@ -15,33 +15,33 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
 
     public async Task<RequestDetailsDto> Handle(GetRequestDetailsQuery request, CancellationToken cancellationToken)
     {
-        var entity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
+        var requestEntity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
 
-        if (entity == null) throw new Exception("Заявка не найдена");
+        if (requestEntity == null) throw new Exception("Заявка не найдена");
 
         return new RequestDetailsDto
         {
-            Id = entity.Id,
-            Status = entity.Status,
+            Id = requestEntity.Id,
+            Status = requestEntity.Status,
             
-            DeviceType = entity.DeviceType?.Name ?? "Неизвестно",
-            DeviceModel = entity.DeviceModel,
-            DeviceSerialNumber = entity.DeviceSerialNumber,
-            Description = entity.Description,
+            DeviceType = requestEntity.DeviceType?.Name ?? "Неизвестно",
+            DeviceModel = requestEntity.DeviceModelName,
+            DeviceSerialNumber = requestEntity.DeviceSerialNumber,
+            Description = requestEntity.Description,
             
-            ServiceName = entity.Service.Name,
-            Price = entity.Service.Price,
-            WarrantyPeriod = entity.Service.WarrantyPeriod,
+            ServiceName = requestEntity.Service?.Name,
+            Price = requestEntity.Service?.Price,
+            WarrantyPeriod = requestEntity.Service.WarrantyPeriod,
             
-            CreatedAt = entity.CreatedAt,
-            ClosedAt = entity.ClosedAt,
+            CreatedAt = requestEntity.CreatedAt,
+            ClosedAt = requestEntity.ClosedAt,
             
-            ClientName = $"{entity.Client.FirstName} {entity.Client.LastName}",
-            SpecialistName = entity.Specialist?.FullName,
+            ClientName = requestEntity.Client.Name,
+            SpecialistName = requestEntity.Specialist?.FullName,
 
-            PhotoPaths = entity.Photos.Select(p => p.FilePath).ToList(),
+            PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList(),
 
-            History = entity.StatusHistories
+            History = requestEntity.StatusHistories
                 .OrderByDescending(h => h.Timestamp)
                 .Select(h => new StatusHistoryDto 
                 { 

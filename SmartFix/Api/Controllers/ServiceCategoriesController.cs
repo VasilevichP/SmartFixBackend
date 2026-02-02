@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SmartFix.Application.Features.ServiceCategories.Commands.CreateCategory;
 using SmartFix.Application.Features.ServiceCategories.Commands.DeleteCategory;
 using SmartFix.Application.Features.ServiceCategories.Commands.UpdateCategory;
-using SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
+using SmartFix.Application.Features.ServiceCategories.Queries.GetAllServiceCategories;
 
 namespace SmartFix.Api.Controllers;
 

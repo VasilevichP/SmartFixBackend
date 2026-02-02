@@ -1,4 +1,4 @@
-namespace SmartFix.Application.Abstractions;
+namespace SmartFix.Domain.Abstractions;
 
 public interface IFileService
 {

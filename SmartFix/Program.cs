@@ -1,11 +1,11 @@
+using System.Reflection;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using SmartFix.Application.Abstractions;
-using SmartFix.Application.Authentication;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Application.Authentication;
 using SmartFix.Infrastructure.Authentication;
 using SmartFix.Infrastructure.Persistence;
 using SmartFix.Infrastructure.Repositories;
@@ -29,9 +29,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
 builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
 builder.Services.AddScoped<IDeviceTypeRepository, DeviceTypeRepository>();
+builder.Services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
+builder.Services.AddScoped<IDeviceModelRepository, DeviceModelRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -40,14 +43,20 @@ builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddSwaggerGen(options =>
 {
-    // add JWT Authentication
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "SmartFix API",
+        Version = "v1",
+        Description = "API для сервисного центра по ремонту техники. "
+    });
+    
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "JWT Authentication",
         Description = "Enter JWT Bearer token **_only_**",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = "bearer", // must be lower case
+        Scheme = "bearer", 
         BearerFormat = "JWT",
         Reference = new OpenApiReference
         {
@@ -60,6 +69,14 @@ builder.Services.AddSwaggerGen(options =>
     {
         {securityScheme, new string[] { }}
     });
+    
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -112,3 +129,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

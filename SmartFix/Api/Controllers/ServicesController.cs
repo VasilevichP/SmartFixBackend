@@ -5,6 +5,7 @@ using SmartFix.Application.Features.Services.Commands.ChangeVisibility;
 using SmartFix.Application.Features.Services.Commands.CreateService;
 using SmartFix.Application.Features.Services.Commands.DeleteService;
 using SmartFix.Application.Features.Services.Commands.UpdateService;
+using SmartFix.Application.Features.Services.Queries;
 using SmartFix.Application.Features.Services.Queries.GetAllForClient;
 using SmartFix.Application.Features.Services.Queries.GetAllForManager;
 
@@ -23,20 +24,27 @@ public class ServicesController : ControllerBase
 
     [HttpGet("client-list")]
     [Authorize(Roles = "Client")]
-    public async Task<IActionResult> GetClientServices()
+    public async Task<IActionResult> GetClientServices([FromQuery] GetAllServicesForManagerQuery filterParams)
     {
-        var result = await _mediator.Send(new GetAllForClientQuery());
+        var result = await _mediator.Send(filterParams);
         return Ok(result);
     }
 
     [HttpGet("manager-list")]
     [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> GetManagerServices()
+    public async Task<IActionResult> GetManagerServices([FromQuery] GetAllServicesForManagerQuery filterParams)
     {
-        var result = await _mediator.Send(new GetAllForManagerQuery());
+        var result = await _mediator.Send(filterParams);
         return Ok(result);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetDetails(Guid id)
+    {
+        var result = await _mediator.Send(new GetServiceDetailsQuery { ServiceId = id });
+        return Ok(result);
+    }
+    
     [HttpPost]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> CreateService([FromBody] CreateServiceCommand command)

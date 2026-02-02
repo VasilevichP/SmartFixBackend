@@ -10,23 +10,19 @@ public class User
     public string PasswordHash { get; private set; }
     public Role Role { get; private set; }
 
-    public string? FirstName { get; private set; }
-    public string? LastName { get; private set; }
-    public string? MiddleName { get; private set; }
+    public string? Name { get; private set; }
     public string? PhoneNumber { get; private set; }
     private User() { } 
 
-    public static User CreateClient(string email, string passwordHash, string firstName, string lastName, string phoneNumber, string? middleName = null)
+    public static User CreateClient(string email, string passwordHash, string? name, string? phoneNumber)
     {
         return new User
         {
             Email = email,
             PasswordHash = passwordHash,
             Role = Role.Client,
-            FirstName = firstName,
-            LastName = lastName,
             PhoneNumber = phoneNumber,
-            MiddleName = middleName
+            Name = name
         };
     }
  public static User CreateManager(string email, string passwordHash)

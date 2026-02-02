@@ -9,5 +9,9 @@ public class UpdateServiceCommand : IRequest
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public int WarrantyPeriod { get; set; }
+    public Guid CategoryId { get; set; }
+    public Guid DeviceTypeId { get; set; }
+    public Guid? ManufacturerId { get; set; } 
+    public Guid? DeviceModelId { get; set; }
     public Boolean IsAvailable { get; set; }
 }

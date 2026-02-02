@@ -2,7 +2,7 @@ using MediatR;
 using SmartFix.Application.Features.Specialists.DTO;
 using SmartFix.Domain.Abstractions;
 
-namespace SmartFix.Application.Features.Specialists.Queries.GetAll;
+namespace SmartFix.Application.Features.Specialists.Queries.GetAllSpecialists;
 
 public class GetAllSpecialistsQueryHandler : IRequestHandler<GetAllSpecialistsQuery, List<SpecialistDto>>
 {

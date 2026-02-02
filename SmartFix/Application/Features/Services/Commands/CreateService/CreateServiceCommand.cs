@@ -9,4 +9,8 @@ public class CreateServiceCommand : IRequest
     public decimal Price { get; set; }
     public int WarrantyPeriod { get; set; }
     public Guid CategoryId { get; set; }
+    
+    public Guid DeviceTypeId { get; set; }
+    public Guid? ManufacturerId { get; set; } 
+    public Guid? DeviceModelId { get; set; }
 }

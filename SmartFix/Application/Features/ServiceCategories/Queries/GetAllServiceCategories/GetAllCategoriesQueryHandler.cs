@@ -2,7 +2,7 @@ using MediatR;
 using SmartFix.Application.Features.ServiceCategories.DTO;
 using SmartFix.Domain.Abstractions;
 
-namespace SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
+namespace SmartFix.Application.Features.ServiceCategories.Queries.GetAllServiceCategories;
 
 public class GetAllCategoriesQueryHandler : IRequestHandler<GetAllCategoriesQuery, List<ServiceCategoryDto>>
 {

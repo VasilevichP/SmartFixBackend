@@ -38,10 +38,8 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
             user = User.CreateClient(
                             request.Email,
                             passwordHash,
-                            request.FirstName,
-                            request.LastName,
-                            request.Phone,
-                            request.MiddleName
+                            request.Name,
+                            request.Phone
                         );
         }
         else

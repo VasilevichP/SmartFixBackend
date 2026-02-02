@@ -1,11 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartFix.Application.Features.ServiceCategories.Queries.GetAll;
 using SmartFix.Application.Features.Specialists.Commands.AddSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.DeleteSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.UpdateSpecialist;
-using SmartFix.Application.Features.Specialists.Queries.GetAll;
+using SmartFix.Application.Features.Specialists.Queries.GetAllSpecialists;
 
 namespace SmartFix.Api.Controllers;
 

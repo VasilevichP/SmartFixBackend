@@ -15,10 +15,13 @@ public class AppDbContext : DbContext
     public DbSet<Service> Services { get; set; }
     public DbSet<ServiceCategory> ServiceCategories { get; set; }
     public DbSet<DeviceType> DeviceTypes { get; set; }
+    public DbSet<Manufacturer> Manufacturers { get; set; }
+    public DbSet<DeviceModel> DeviceModels { get; set; }
     public DbSet<Request> Requests { get; set; }
     public DbSet<StatusHistory> StatusHistories { get; set; }
     public DbSet<RequestPhoto> RequestPhotos { get; set; }
     public DbSet<Specialist> Specialists { get; set; }
+    public DbSet<Review> Reviews { get; set; }
 
     [Obsolete("Obsolete")]
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -39,9 +42,7 @@ public class AppDbContext : DbContext
                     v => v.ToString(),
                     v => (Role)Enum.Parse(typeof(Role), v));
 
-            builder.Property(u => u.FirstName).HasMaxLength(100);
-            builder.Property(u => u.LastName).HasMaxLength(100);
-            builder.Property(u => u.MiddleName).HasMaxLength(100);
+            builder.Property(u => u.Name).HasMaxLength(150);
             builder.Property(u => u.PhoneNumber).HasMaxLength(20);
         });
 
@@ -62,6 +63,22 @@ public class AppDbContext : DbContext
             builder.HasOne(s => s.Category)
                 .WithMany(sc => sc.Services)
                 .HasForeignKey(s => s.CategoryId);
+            
+            builder.HasOne(s => s.DeviceType)
+                .WithMany()
+                .HasForeignKey(s => s.DeviceTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            builder.HasOne(s => s.Manufacturer)
+                .WithMany()
+                .HasForeignKey(s => s.ManufacturerId)
+                .IsRequired(false);
+            
+            builder.HasOne(s => s.DeviceModel)
+                .WithMany()
+                .HasForeignKey(s => s.DeviceModelId)
+                .IsRequired(false);
+            
             builder.HasCheckConstraint("CK_Services_WarrantyPeriod",
                 "WarrantyPeriod > 0");
         });
@@ -77,10 +94,38 @@ public class AppDbContext : DbContext
             builder.HasKey(dt => dt.Id);
             builder.Property(dt => dt.Name).IsRequired().HasMaxLength(100);
         });
-        
+        modelBuilder.Entity<Manufacturer>(b => {
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Name).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<DeviceModel>(b => {
+            b.HasKey(m => m.Id);
+            b.Property(m => m.Name).IsRequired().HasMaxLength(100);
+            
+            b.HasOne(m => m.Manufacturer)
+                .WithMany()
+                .HasForeignKey(m => m.ManufacturerId);
+
+            b.HasOne(m => m.DeviceType)
+                .WithMany()
+                .HasForeignKey(m => m.DeviceTypeId);
+        });
+
         modelBuilder.Entity<Request>(builder =>
         {
-            builder.Property(r => r.DeviceModel).IsRequired().HasMaxLength(150);
+            builder.Property(r => r.DeviceModelName).IsRequired().HasMaxLength(150);
+            
+            builder.HasOne(r => r.Service)
+                .WithMany()
+                .HasForeignKey(r => r.ServiceId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(r => r.DeviceModel)
+                .WithMany()
+                .HasForeignKey(r => r.DeviceModelId)
+                .IsRequired(false);
             
             builder.HasOne(r => r.DeviceType)
                 .WithMany()
@@ -107,6 +152,22 @@ public class AppDbContext : DbContext
             builder.Property(h => h.Status)
                 .HasConversion<string>()
                 .HasMaxLength(50);
+        });
+        modelBuilder.Entity<Review>(builder =>
+        {
+            builder.HasKey(r => r.Id);
+            builder.Property(r => r.Comment).HasMaxLength(1000);
+            builder.Property(r => r.Rating).IsRequired();
+            
+            builder.HasOne(r => r.Client)
+                .WithMany()
+                .HasForeignKey(r => r.ClientId)
+                .OnDelete(DeleteBehavior.Restrict); 
+            
+            builder.HasOne(r => r.Service)
+                .WithMany(s => s.Reviews)
+                .HasForeignKey(r => r.ServiceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

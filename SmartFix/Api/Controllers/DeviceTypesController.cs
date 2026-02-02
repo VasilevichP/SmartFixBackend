@@ -11,11 +11,11 @@ namespace SmartFix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DeviceTypeController : ControllerBase
+public class DeviceTypesController : ControllerBase
 {
     private readonly ISender _mediator;
 
-    public DeviceTypeController(ISender mediator)
+    public DeviceTypesController(ISender mediator)
     {
         _mediator = mediator;
     }

@@ -1,5 +1,5 @@
 using MediatR;
-using SmartFix.Application.Abstractions;
+using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
 
@@ -23,10 +23,11 @@ public class CreateRequestCommandHandler : IRequestHandler<CreateRequestCommand,
     {
         var domainRequest = Request.Create(
             clientId: request.ClientId,
-            serviceId: request.ServiceId,
             deviceTypeId: request.DeviceTypeId,
-            deviceModel: request.DeviceModel,
             description: request.Description,
+            serviceId: request.ServiceId,
+            deviceModelId: request.DeviceModelId,
+            deviceModelName: request.DeviceModelName,
             deviceSerialNumber: request.DeviceSerialNumber
         );
         if (request.Photos != null && request.Photos.Count > 0)

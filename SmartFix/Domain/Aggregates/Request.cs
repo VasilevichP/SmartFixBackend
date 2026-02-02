@@ -7,18 +7,27 @@ public class Request
     public Guid Id { get; private set; }
     public RequestStatus Status { get; private set; }
     public string Description { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+
+    public DateTime? ClosedAt { get; private set; }
+    public string DeviceSerialNumber { get; private set; }
+
+    //---------------------------------------
     public Guid DeviceTypeId { get; private set; }
     public DeviceType DeviceType { get; private set; }
-    public string DeviceModel { get; private set; }
-    public string DeviceSerialNumber { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? ClosedAt { get; private set; }
+
+    public Guid? DeviceModelId { get; private set; }
+    public DeviceModel? DeviceModel { get; private set; }
+    public string DeviceModelName { get; private set; }
     public Guid? SpecialistId { get; private set; }
     public Specialist Specialist { get; private set; }
     public Guid ClientId { get; private set; }
     public User Client { get; private set; }
-    public Guid ServiceId { get; private set; }
-    public Service Service { get; private set; }
+    public Guid? ServiceId { get; private set; }
+
+    public Service? Service { get; private set; }
+
+    //------------------------------------------
     private readonly List<RequestPhoto> _photos = new();
     public IReadOnlyCollection<RequestPhoto> Photos => _photos.AsReadOnly();
     private readonly List<StatusHistory> _statusHistories = new();
@@ -28,23 +37,25 @@ public class Request
     {
     }
 
-    public static Request Create(Guid clientId, Guid serviceId, Guid deviceTypeId, string deviceModel,
-        string description, string? deviceSerialNumber)
+    public static Request Create(Guid clientId, Guid deviceTypeId,
+        string description, Guid? serviceId, Guid? deviceModelId, string deviceModelName, string deviceSerialNumber)
     {
-        var request = new Request
-        {
-            Id = Guid.NewGuid(),
-            Status = RequestStatus.New,
-            ClientId = clientId,
-            ServiceId = serviceId,
-            DeviceTypeId = deviceTypeId,
-            DeviceModel = deviceModel,
-            Description = description,
-            DeviceSerialNumber = deviceSerialNumber,
-            CreatedAt = DateTime.UtcNow
-        };
-        request.AddStatusHistory(RequestStatus.New);
-        return request;
+        var request = new Request{
+        Status = RequestStatus.New,
+        CreatedAt = DateTime.UtcNow,
+        ClientId = clientId,
+            
+        DeviceTypeId = deviceTypeId,
+        DeviceModelName = deviceModelName,
+        DeviceModelId = deviceModelId,
+            
+        ServiceId = serviceId,
+            
+        Description = description,
+        DeviceSerialNumber = deviceSerialNumber
+    };
+    request.AddStatusHistory(RequestStatus.New);
+    return request;
     }
 
     public void ChangeStatus(RequestStatus newStatus)

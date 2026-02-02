@@ -1,4 +1,4 @@
-using SmartFix.Application.Abstractions;
+using SmartFix.Domain.Abstractions;
 
 namespace SmartFix.Infrastructure.Services;
 
@@ -14,8 +14,9 @@ public class FileService : IFileService
     public async Task<string> SaveFileAsync(IFormFile file, string folderName,
         CancellationToken cancellationToken = default)
     {
-        var uploadsFolder = Path.Combine(_environment.WebRootPath, "images", folderName);
+        string webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
 
+        var uploadsFolder = Path.Combine(webRootPath, "images", folderName);
         if (!Directory.Exists(uploadsFolder))
         {
             Directory.CreateDirectory(uploadsFolder);
