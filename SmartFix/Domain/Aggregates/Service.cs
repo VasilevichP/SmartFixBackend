@@ -1,3 +1,6 @@
+using System.Net;
+using SmartFix.Domain.Exceptions;
+
 namespace SmartFix.Domain.Aggregates;
 
 public class Service
@@ -6,10 +9,12 @@ public class Service
     public string Name { get; private set; }
     public string? Description { get; private set; }
     public decimal Price { get; private set; }
-    public int WarrantyPeriod { get; private set; }
+    public int? WarrantyPeriod { get; private set; }
     public bool IsAvailable { get; private set; }
     public Guid CategoryId { get; private set; }
     public ServiceCategory Category { get; private set; }
+
+    public bool IsDeleted { get; private set; }
 
     public Guid DeviceTypeId { get; private set; }
     public DeviceType DeviceType { get; private set; }
@@ -26,9 +31,11 @@ public class Service
     }
 
     public static Service Create(string name, decimal price, Guid categoryId, string? description,
-        int warrantyPeriod, Guid deviceTypeId, Guid? deviceModelId, Guid? manufacturerId)
+        int? warrantyPeriod, Guid deviceTypeId, Guid? deviceModelId, Guid? manufacturerId)
     {
-        // Здесь можно добавить валидацию (цена > 0, имя не пустое и т.д.)
+        if (price <= 0) throw new HttpException(HttpStatusCode.BadRequest, "Цена должна быть больше 0");
+        if (warrantyPeriod.HasValue && warrantyPeriod <= 0)
+            throw new HttpException(HttpStatusCode.BadRequest, "Период гарантии должен быть больше 0");
         return new Service
         {
             Id = Guid.NewGuid(),
@@ -40,13 +47,17 @@ public class Service
             ManufacturerId = manufacturerId,
             Description = description,
             WarrantyPeriod = warrantyPeriod,
-            IsAvailable = true
+            IsAvailable = true,
+            IsDeleted = false
         };
     }
 
-    public void UpdateDetails(string name, decimal price, string? description, int warrantyPeriod, Boolean isAvailable,
+    public void UpdateDetails(string name, decimal price, string? description, int? warrantyPeriod, Boolean isAvailable,
         Guid categoryId, Guid deviceTypeId, Guid? manufacturerId, Guid? deviceModelId)
     {
+        if (price <= 0) throw new HttpException(HttpStatusCode.BadRequest, "Цена должна быть больше 0");
+        if (warrantyPeriod.HasValue && warrantyPeriod <= 0)
+            throw new HttpException(HttpStatusCode.BadRequest, "Период гарантии должен быть больше 0");
         Name = name;
         Price = price;
         Description = description;
@@ -66,5 +77,11 @@ public class Service
     public void Show()
     {
         IsAvailable = true;
+    }
+
+    public void Archive()
+    {
+        IsAvailable = false;
+        IsDeleted = true;
     }
 }

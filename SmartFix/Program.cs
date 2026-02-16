@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SmartFix;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Application.Authentication;
 using SmartFix.Infrastructure.Authentication;
@@ -35,11 +36,13 @@ builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
 builder.Services.AddScoped<IDeviceTypeRepository, DeviceTypeRepository>();
 builder.Services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
 builder.Services.AddScoped<IDeviceModelRepository, DeviceModelRepository>();
+builder.Services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -120,6 +123,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles(); 
 
+app.UseMiddleware<CustomExceptionHandlerMiddleware>(); 
 app.UseHttpsRedirection();
 app.UseCors("CORSSpecifications");
 

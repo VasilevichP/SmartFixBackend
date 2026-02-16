@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFix.Application.Features.Reviews.Commands.CreateReview;
-using SmartFix.Application.Features.Reviews.Commands.DeleteReview;
 
 namespace SmartFix.Api.Controllers;
 
@@ -28,21 +27,5 @@ public class ReviewsController : ControllerBase
         command.ClientId = userId;
         await _mediator.Send(command);
         return Ok();
-    }
-
-    [HttpDelete]
-    [Authorize] 
-    public async Task<IActionResult> Delete([FromBody] DeleteReviewCommand command)
-    {
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
-        command.UserId = userId;
-        command.UserRole = userRole;
-
-        await _mediator.Send(command);
-        return NoContent();
     }
 }

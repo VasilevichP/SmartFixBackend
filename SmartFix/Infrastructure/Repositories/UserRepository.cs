@@ -41,4 +41,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.AnyAsync(u => u.Role == Role.Manager,cancellationToken);
     }
+
+    public void Update(User user, CancellationToken cancellationToken = default)
+    {
+        _context.Users.Update(user);
+    }
 }

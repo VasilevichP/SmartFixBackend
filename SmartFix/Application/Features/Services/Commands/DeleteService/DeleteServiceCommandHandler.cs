@@ -1,5 +1,7 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Services.Commands.DeleteService;
 
@@ -19,13 +21,8 @@ public class DeleteServiceCommandHandler : IRequestHandler<DeleteServiceCommand>
         var service = await _serviceRepository.GetByIdAsync(request.Id, cancellationToken);
         if (service == null)
         {
-            return;
+            throw new HttpException(HttpStatusCode.NotFound,"Услуга не найдена");
         }
-
-        // TODO: В соответствии с User Story (US04, US05), здесь нужно добавить проверку
-        // на наличие активных заявок для этой услуги перед удалением.
-        // var activeRequests = _requestRepository.GetActiveByServiceId(request.Id);
-        // if (activeRequests.Any()) throw new Exception("Невозможно удалить услугу...");
 
         _serviceRepository.Delete(service);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

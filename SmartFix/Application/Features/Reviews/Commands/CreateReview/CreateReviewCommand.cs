@@ -6,6 +6,6 @@ public class CreateReviewCommand: IRequest
 {
     public Guid ServiceId { get; set; }
     public int Rating { get; set; }
-    public string Comment { get; set; }
+    public string? Comment { get; set; }
     public Guid ClientId { get; set; }
 }

@@ -81,12 +81,14 @@ public class AppDbContext : DbContext
             
             builder.HasCheckConstraint("CK_Services_WarrantyPeriod",
                 "WarrantyPeriod > 0");
+            builder.HasCheckConstraint("CK_Services_Price",
+                "Price > 0");
         });
         
         modelBuilder.Entity<Specialist>(builder =>
         {
             builder.HasKey(s => s.Id);
-            builder.Property(s => s.FullName).IsRequired().HasMaxLength(255);
+            builder.Property(s => s.Name).IsRequired().HasMaxLength(255);
         });
         
         modelBuilder.Entity<DeviceType>(builder =>
@@ -114,6 +116,10 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Request>(builder =>
         {
+            builder.HasIndex(r => r.CreatedAt);
+            builder.HasIndex(r => r.Status);
+            builder.HasIndex(r => r.SpecialistId);
+            
             builder.Property(r => r.DeviceModelName).IsRequired().HasMaxLength(150);
             
             builder.HasOne(r => r.Service)
@@ -137,6 +143,8 @@ public class AppDbContext : DbContext
             builder.HasMany(r => r.Photos)
                 .WithOne()
                 .HasForeignKey(p => p.RequestId);
+            builder.HasCheckConstraint("CK_Request_Price",
+                "Price > 0");
         });
         
         modelBuilder.Entity<RequestPhoto>(builder =>

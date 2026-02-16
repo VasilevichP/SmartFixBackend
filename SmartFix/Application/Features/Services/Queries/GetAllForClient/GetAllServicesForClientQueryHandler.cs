@@ -4,7 +4,7 @@ using SmartFix.Domain.Abstractions;
 
 namespace SmartFix.Application.Features.Services.Queries.GetAllForClient;
 
-public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllServicesForClientQuery, List<ServiceDTO>>
+public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllServicesForClientQuery, List<ServiceDTOForClient>>
 {
     private readonly IServiceRepository _serviceRepository;
 
@@ -13,11 +13,10 @@ public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllService
         _serviceRepository = serviceRepository;
     }
 
-    public async Task<List<ServiceDTO>> Handle(GetAllServicesForClientQuery request, CancellationToken cancellationToken)
+    public async Task<List<ServiceDTOForClient>> Handle(GetAllServicesForClientQuery request, CancellationToken cancellationToken)
     {
-        var services = await _serviceRepository.GetFilteredAsync(
+        var services = await _serviceRepository.GetFilteredForClientAsync(
             request.SearchTerm,
-            true,
             request.CategoryId,
             request.DeviceTypeId,
             request.ManufacturerId,
@@ -26,7 +25,7 @@ public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllService
             cancellationToken
         );
 
-        return services.Select(s => new ServiceDTO
+        return services.Select(s => new ServiceDTOForClient
         {
             Id = s.Id,
             Name = s.Name,
@@ -38,7 +37,9 @@ public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllService
             ManufacturerName = s.Manufacturer?.Name,
             DeviceModelId = s.DeviceModelId,
             DeviceModelName = s.DeviceModel?.Name,
-            IsAvailable = s.IsAvailable
+            AverageRating = s.Reviews.Any() 
+                ? Math.Round(s.Reviews.Average(r => r.Rating), 1) 
+                : 0
         }).ToList();
     }
 }

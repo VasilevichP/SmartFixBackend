@@ -4,5 +4,5 @@ namespace SmartFix.Application.Features.Specialists.Commands.AddSpecialist;
 
 public class AddSpecialistCommand : IRequest
 {
-    public string FullName { get; set; }
+    public string Name { get; set; }
 }

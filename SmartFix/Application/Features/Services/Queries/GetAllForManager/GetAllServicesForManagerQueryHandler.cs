@@ -15,7 +15,7 @@ public class GetAllServicesForManagerQueryHandler : IRequestHandler<GetAllServic
 
     public async Task<List<ServiceDTO>> Handle(GetAllServicesForManagerQuery request, CancellationToken cancellationToken)
     {
-        var services = await _serviceRepository.GetFilteredAsync(
+        var services = await _serviceRepository.GetFilteredForManagerAsync(
             request.SearchTerm,
             request.Status,
             request.CategoryId,

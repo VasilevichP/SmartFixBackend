@@ -12,7 +12,10 @@ public class User
 
     public string? Name { get; private set; }
     public string? PhoneNumber { get; private set; }
-    private User() { } 
+
+    private User()
+    {
+    }
 
     public static User CreateClient(string email, string passwordHash, string? name, string? phoneNumber)
     {
@@ -25,7 +28,8 @@ public class User
             Name = name
         };
     }
- public static User CreateManager(string email, string passwordHash)
+
+    public static User CreateManager(string email, string passwordHash)
     {
         return new User
         {
@@ -33,5 +37,12 @@ public class User
             PasswordHash = passwordHash,
             Role = Role.Manager
         };
+    }
+
+    public void UpdateUser(string email, string name, string phone)
+    {
+        Email = email;
+        Name = name;
+        PhoneNumber = phone;
     }
 }

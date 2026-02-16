@@ -1,16 +1,19 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Reviews.Commands.CreateReview;
 
-public class CreateReviewCommandHandler: IRequestHandler<CreateReviewCommand>
+public class CreateReviewCommandHandler : IRequestHandler<CreateReviewCommand>
 {
     private readonly IReviewRepository _reviewRepository;
     private readonly IServiceRepository _serviceRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CreateReviewCommandHandler(IReviewRepository reviewRepository, IServiceRepository serviceRepository, IUnitOfWork unitOfWork)
+    public CreateReviewCommandHandler(IReviewRepository reviewRepository, IServiceRepository serviceRepository,
+        IUnitOfWork unitOfWork)
     {
         _reviewRepository = reviewRepository;
         _serviceRepository = serviceRepository;
@@ -21,7 +24,7 @@ public class CreateReviewCommandHandler: IRequestHandler<CreateReviewCommand>
     {
         var service = await _serviceRepository.GetByIdAsync(request.ServiceId, cancellationToken);
         if (service == null)
-            throw new Exception("Услуга не найдена");
+            throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена");
 
         var review = Review.Create(request.ServiceId, request.ClientId, request.Rating, request.Comment);
 

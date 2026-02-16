@@ -15,16 +15,23 @@ public class GetAllRequestsQueryHandler: IRequestHandler<GetAllRequestsQuery, Li
 
     public async Task<List<RequestsBriefDto>> Handle(GetAllRequestsQuery request, CancellationToken cancellationToken)
     {
-        var requests = await _requestRepository.GetAllAsync(cancellationToken);
+        var requests = await _requestRepository.GetAllAsync(
+            request.Client?.ToLower(),
+            request.Device?.ToLower(),
+            request.Service?.ToLower(),
+            request.Status,
+            request.SortOrder,
+            cancellationToken);
 
         return requests.Select(r => new RequestsBriefDto
         {
             Id = r.Id,
             ClientName = r.Client.Name,
-            ServiceName = r.Service.Name,
+            ServiceName = r.Service?.Name ?? "Индивидуальная услуга",
+            DeviceModelName = r.DeviceModelName,
             CreatedAt = r.CreatedAt,
             Status = r.Status,
-            SpecialistName = r.Specialist?.FullName ?? "Не назначен"
+            SpecialistName = r.Specialist?.Name ?? "Не назначен"
         }).ToList();
     }
 }

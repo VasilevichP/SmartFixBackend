@@ -24,7 +24,7 @@ public class ServicesController : ControllerBase
 
     [HttpGet("client-list")]
     [Authorize(Roles = "Client")]
-    public async Task<IActionResult> GetClientServices([FromQuery] GetAllServicesForManagerQuery filterParams)
+    public async Task<IActionResult> GetClientServices([FromQuery] GetAllServicesForClientQuery filterParams)
     {
         var result = await _mediator.Send(filterParams);
         return Ok(result);

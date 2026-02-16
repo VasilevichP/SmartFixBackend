@@ -13,17 +13,20 @@ public class RequestDetailsDto
     public string DeviceModel { get; set; }
     public string DeviceSerialNumber { get; set; }
     public string Description { get; set; }
-    
-    // Информация об услуге
     public string? ServiceName { get; set; }
     public decimal? Price { get; set; }
-    public int WarrantyPeriod { get; set; }
+    public int? WarrantyPeriod { get; set; }
     // Даты
     public DateTime CreatedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
     
     // Участники
+    public Guid ClientId { get; set; }
+    public string ClientEmail { get; set; }
+    public string ClientPhone { get; set; }
     public string ClientName { get; set; }
+    
+    public Guid? SpecialistId { get; set; }
     public string? SpecialistName { get; set; }
     
     // Фотографии (список ссылок)

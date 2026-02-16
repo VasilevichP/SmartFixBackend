@@ -4,7 +4,7 @@ public class DeviceModel
 {
     public Guid Id { get; private set; }
     public string Name { get; private set; }
-    
+    public bool IsDeleted { get; private set; }
     public Guid ManufacturerId { get; private set; }
     public Manufacturer Manufacturer { get; private set; }
 
@@ -28,4 +28,8 @@ public class DeviceModel
         ManufacturerId = manufacturerId;
         DeviceTypeId = deviceTypeId;
     } 
+    public void Archive()
+    {
+        IsDeleted = true;
+    }
 }

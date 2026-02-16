@@ -1,8 +1,10 @@
+using System.Net;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SmartFix.Application.Authentication;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Users.Commands.RegisterClient;
 
@@ -27,7 +29,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
         var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (existingUser != null)
         {
-            throw new Exception("Пользователь с таким email уже существует.");
+            throw new HttpException(HttpStatusCode.BadRequest, "Пользователь с таким email уже существует.");
         }
 
         var passwordHash = _passwordHasher.HashPassword(request.Password);
@@ -50,7 +52,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
         var numOfAddedEntities = await _userRepository.AddAsync(user);
         if(numOfAddedEntities == 0) 
         {
-            throw new Exception("Возникла ошибка при добавлении в базу данных");
+            throw new HttpException(HttpStatusCode.InternalServerError, "Возникла ошибка при добавлении в базу данных");
         }
     }
 }

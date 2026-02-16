@@ -35,26 +35,7 @@ public class ServiceRepository : IServiceRepository
     {
         _context.Services.Update(service);
     }
-
-    // public async Task<List<Service>> GetAllForClientAsync(CancellationToken cancellationToken = default)
-    // {
-    //     return await _context.Services
-    //         .Include(s => s.Category)
-    //         .Where(s => s.IsAvailable)
-    //         .ToListAsync(cancellationToken);
-    // }
-    //
-    // public async Task<List<Service>> GetAllForManagerAsync(CancellationToken cancellationToken = default)
-    // {
-    //     return await _context.Services
-    //         .Include(s => s.Category)
-    //         .Include(s=>s.DeviceType)
-    //         .Include(s => s.DeviceModel)
-    //         .Include(s=>s.Manufacturer)
-    //         .ToListAsync(cancellationToken);
-    // }
-
-    public async Task<List<Service>> GetFilteredAsync(string? searchTerm, bool? status, Guid? categoryId,
+    public async Task<List<Service>> GetFilteredForManagerAsync(string? searchTerm, bool? status, Guid? categoryId,
         Guid? deviceTypeId, Guid? manufacturerId, Guid? deviceModelId, int sortOrder,
         CancellationToken cancellationToken = default)
     {
@@ -63,6 +44,7 @@ public class ServiceRepository : IServiceRepository
             .Include(s=>s.DeviceType)
             .Include(s => s.DeviceModel)
             .Include(s=>s.Manufacturer)
+            .Where(s=>!s.IsDeleted)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -99,9 +81,79 @@ public class ServiceRepository : IServiceRepository
 
         return await query.ToListAsync(cancellationToken);
     }
-
-    public void Delete(Service service)
+    
+    public async Task<List<Service>> GetFilteredForClientAsync(string? searchTerm, Guid? categoryId,
+        Guid? deviceTypeId, Guid? manufacturerId, Guid? deviceModelId, int sortOrder,
+        CancellationToken cancellationToken = default)
     {
-        _context.Services.Remove(service);
+        var query = _context.Services
+            .Include(s => s.Category)
+            .Include(s=>s.DeviceType)
+            .Include(s => s.DeviceModel)
+            .Include(s=>s.Manufacturer)
+            .Include(s=>s.Reviews)
+            .Where(s=>s.IsAvailable)
+            .Where(s=>!s.IsDeleted)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(s => s.Name.ToLower().Contains(searchTerm) ||
+                                     s.Category.Name.Contains(searchTerm));
+        }
+
+        if (categoryId.HasValue)
+            query = query.Where(s => s.CategoryId == categoryId.Value);
+
+        if (deviceTypeId.HasValue)
+            query = query.Where(s => s.DeviceTypeId == deviceTypeId.Value);
+        
+        if (manufacturerId.HasValue)
+            query = query.Where(s => 
+                s.ManufacturerId == manufacturerId.Value || 
+                (s.DeviceModel != null && s.DeviceModel.ManufacturerId == manufacturerId.Value)
+            );;
+
+        if (deviceModelId.HasValue)
+            query = query.Where(s => s.DeviceModelId == deviceModelId.Value);
+
+        query = sortOrder switch
+        {
+            1 => query.OrderByDescending(s => s.Name),
+            2 => query.OrderBy(s => s.Price),
+            3 => query.OrderByDescending(s => s.Price),
+            _ => query.OrderBy(s => s.Name),
+        };
+
+        return await query.ToListAsync(cancellationToken);
+    }
+    public async Task<bool> IsDuplicateAsync(string name, Guid deviceTypeId, Guid? deviceModelId, CancellationToken ct)
+    {
+        return await _context.Services
+            .AnyAsync(s => 
+                    s.Name == name && 
+                    s.DeviceTypeId == deviceTypeId && 
+                    s.DeviceModelId == deviceModelId &&
+                    !s.IsDeleted,
+                ct);
+    }
+
+    public async Task<bool> HasLinkedRequestsAsync(Guid serviceId, CancellationToken ct)
+    {
+        return await _context.Requests.AnyAsync(r => r.ServiceId == serviceId,  ct);
+    }
+    public async Task Delete(Service service, CancellationToken ct)
+    {
+        bool hasLinks = await _context.Requests.AnyAsync(r => r.ServiceId == service.Id, ct);
+
+        if (hasLinks)
+        {
+            service.Archive();
+            _context.Services.Update(service);
+        }
+        else
+        {
+            _context.Services.Remove(service);
+        }
     }
 }

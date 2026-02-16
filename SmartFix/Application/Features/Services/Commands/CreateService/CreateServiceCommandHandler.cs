@@ -1,16 +1,19 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Services.Commands.CreateService;
 
-public class CreateServiceCommandHandler: IRequestHandler<CreateServiceCommand>
+public class CreateServiceCommandHandler : IRequestHandler<CreateServiceCommand>
 {
     private readonly IServiceRepository _serviceRepository;
     private IDeviceModelRepository _deviceModelRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CreateServiceCommandHandler(IServiceRepository serviceRepository, IUnitOfWork unitOfWork, IDeviceModelRepository deviceModelRepository)
+    public CreateServiceCommandHandler(IServiceRepository serviceRepository, IUnitOfWork unitOfWork,
+        IDeviceModelRepository deviceModelRepository)
     {
         _serviceRepository = serviceRepository;
         _unitOfWork = unitOfWork;
@@ -22,23 +25,38 @@ public class CreateServiceCommandHandler: IRequestHandler<CreateServiceCommand>
         if (request.DeviceModelId.HasValue)
         {
             var dbModel = await _deviceModelRepository.GetByIdAsync(request.DeviceModelId.Value, cancellationToken);
-            
+
             if (dbModel == null)
             {
-                throw new Exception($"Модель устройства с ID {request.DeviceModelId} не найдена.");
+                throw new HttpException(HttpStatusCode.NotFound, $"Модель устройства {request.Name} не найдена.");
             }
-            
+
             if (dbModel.DeviceTypeId != request.DeviceTypeId)
             {
-                throw new Exception($"Ошибка валидации: Модель '{dbModel.Name}' относится к типу '{dbModel.DeviceType.Name}', а вы пытаетесь создать услугу для другого типа устройства.");
+                throw new HttpException(HttpStatusCode.BadRequest,
+                    $"Модель '{dbModel.Name}' не соответствует выбранному типу устройства.");
             }
 
             if (request.ManufacturerId.HasValue && dbModel.ManufacturerId != request.ManufacturerId.Value)
             {
-                throw new Exception($"Ошибка валидации: Модель '{dbModel.Name}' принадлежит производителю '{dbModel.Manufacturer.Name}', а в форме выбран другой производитель.");
+                throw new HttpException(HttpStatusCode.BadRequest,
+                    $"Модель '{dbModel.Name}' не принадлежит выбранному производителю.");
             }
         }
-        
+
+        bool isDuplicate = await _serviceRepository.IsDuplicateAsync(
+            request.Name,
+            request.DeviceTypeId,
+            request.DeviceModelId,
+            cancellationToken);
+
+        if (isDuplicate)
+        {
+            throw new HttpException(HttpStatusCode.BadRequest,
+                "Услуга с таким названием для данного устройства уже существует.");
+        }
+
+
         var service = Service.Create(
             request.Name,
             request.Price,

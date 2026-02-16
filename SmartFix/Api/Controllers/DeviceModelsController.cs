@@ -1,6 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartFix.Application.Features.DeviceModels.Commands.CreateDeviceModel;
+using SmartFix.Application.Features.DeviceModels.Commands.DeleteDeviceModel;
+using SmartFix.Application.Features.DeviceModels.Commands.UpdateDeviceModel;
 using SmartFix.Application.Features.DeviceModels.Queries.GetAllDeviceModels;
 using SmartFix.Application.Features.Manufacturers.Commands.CreateManufacturer;
 using SmartFix.Application.Features.Manufacturers.Commands.DeleteManufacturer;

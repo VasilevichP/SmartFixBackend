@@ -20,7 +20,10 @@ public class GetAllDeviceModelsQueryHandler : IRequestHandler<GetAllDeviceModels
 
         return categories
             .Select(d => new DeviceModelDto
-                { Id = d.Id, Name = d.Name, DeviceTypeId = d.DeviceTypeId, ManufacturerId = d.ManufacturerId })
+            {
+                Id = d.Id, Name = d.Name, DeviceTypeId = d.DeviceTypeId, ManufacturerId = d.ManufacturerId,
+                DeviceTypeName = d.DeviceType.Name, ManufacturerName = d.Manufacturer.Name
+            })
             .ToList();
     }
 }

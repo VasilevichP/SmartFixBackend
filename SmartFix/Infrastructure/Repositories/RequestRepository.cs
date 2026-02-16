@@ -1,14 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.ValueObjects;
 using SmartFix.Infrastructure.Persistence;
 
 namespace SmartFix.Infrastructure.Repositories;
 
-public class RequestRepository:IRequestRepository
+public class RequestRepository : IRequestRepository
 {
     private readonly AppDbContext _context;
     public RequestRepository(AppDbContext context) => _context = context;
+
     public async Task AddAsync(Request request, CancellationToken cancellationToken = default)
     {
         await _context.Requests.AddAsync(request, cancellationToken);
@@ -19,35 +21,67 @@ public class RequestRepository:IRequestRepository
         return await _context.Requests
             .Include(r => r.Service)
             .Include(r => r.Client)
-            .Include(r=>r.DeviceType)
-            .Include(r=>r.Specialist)
+            .Include(r => r.DeviceType)
+            .Include(r => r.Specialist)
             .Include(r => r.StatusHistories)
-            .Include(r => r.Photos) 
+            .Include(r => r.Photos)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
-    public async Task<List<Request>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Request>> GetAllAsync(string? client,string? device,string? service, RequestStatus? status,
+        int sortOrder, CancellationToken cancellationToken = default)
     {
-        return await _context.Requests
-            .Include(r => r.Service)
+        var query = _context.Requests
             .Include(r => r.Client)
-            .Include(r=>r.Specialist)
-            .OrderByDescending(r => r.CreatedAt)
-            .ToListAsync(cancellationToken);
+            .Include(r => r.Service)
+            .Include(r => r.Specialist)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(client))
+        {
+            query = query.Where(r => 
+                r.Client.Name.ToLower().Contains(client)
+            );
+        }
+        if (!string.IsNullOrWhiteSpace(device))
+        {
+            query = query.Where(r => 
+                r.DeviceModelName.ToLower().Contains(device)
+            );
+        }
+        if (!string.IsNullOrWhiteSpace(service))
+        {
+            query = query.Where(r => 
+                r.Service != null && r.Service.Name.ToLower().Contains(service)
+            );
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        query = sortOrder switch
+        {
+            1 => query.OrderBy(r => r.CreatedAt),           
+            _ => query.OrderByDescending(r => r.CreatedAt), 
+        };
+
+        return await query.ToListAsync(cancellationToken);
     }
-    
+
     public async Task<List<Request>> GetAllForClientAsync(Guid clientId, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
             .Include(r => r.Service)
             .OrderByDescending(r => r.CreatedAt)
-            .Where(r=>r.ClientId == clientId)
+            .Where(r => r.ClientId == clientId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
     }
-    public void Update(Request request)
-         {
-             _context.Requests.Update(request);
-         }
 
+    public void Update(Request request)
+    {
+        _context.Requests.Update(request);
+    }
 }

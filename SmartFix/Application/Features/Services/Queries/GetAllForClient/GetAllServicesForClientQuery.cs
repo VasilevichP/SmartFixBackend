@@ -3,7 +3,7 @@ using SmartFix.Application.Features.Services.DTO;
 
 namespace SmartFix.Application.Features.Services.Queries.GetAllForClient;
 
-public class GetAllServicesForClientQuery : IRequest<List<ServiceDTO>>
+public class GetAllServicesForClientQuery : IRequest<List<ServiceDTOForClient>>
 {
     public string? SearchTerm { get; set; }
     public Guid? CategoryId { get; set; }

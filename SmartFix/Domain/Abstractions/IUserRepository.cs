@@ -9,4 +9,5 @@ public interface IUserRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     public Task<bool> FindByEmailAsync(string email, CancellationToken cancellationToken = default);
     public Task<bool> DoesManagerExistAsync(CancellationToken cancellationToken = default);
+    public void Update(User user, CancellationToken cancellationToken = default);
 }

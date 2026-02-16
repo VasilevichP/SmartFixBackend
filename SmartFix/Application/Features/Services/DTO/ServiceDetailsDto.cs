@@ -8,12 +8,16 @@ public class ServiceDetailsDto
     public string Name { get; set; }
     public string Description { get; set; }
     public decimal Price { get; set; }
-    public int WarrantyPeriod { get; set; }
-    public string CategoryName { get; set; }
+    public int? WarrantyPeriod { get; set; }
     
+    public Guid CategoryId { get; set; }
+    public string CategoryName { get; set; }
+    public Guid DeviceTypeId { get; set; }
     public string DeviceTypeName { get; set; }
+    public Guid? DeviceModelId { get; set; }
 
     public string? DeviceModelName { get; set; }
+    public Guid? ManufacturerId { get; set; }
     public string? ManufacturerName { get; set; }
     
     public bool IsAvailable { get; set; }

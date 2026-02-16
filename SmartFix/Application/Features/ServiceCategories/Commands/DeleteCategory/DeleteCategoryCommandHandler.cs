@@ -1,5 +1,7 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.ServiceCategories.Commands.DeleteCategory;
 
@@ -17,14 +19,10 @@ public class DeleteServiceCategoryCommandHandler : IRequestHandler<DeleteCategor
     public async Task Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
     {
         var category = await _categoryRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (category == null) return;
+        if (category == null) throw new HttpException(HttpStatusCode.NotFound, "Выбранная категория не найдена");
 
-        // TODO: ВАЖНО! Перед удалением категории нужно проверить, не привязаны ли к ней какие-либо услуги.
-        // if (category.Services.Any()) 
-        // {
-        //     throw new Exception("Невозможно удалить категорию, так как к ней привязаны услуги.");
-        // }
-        // Для этого нужно будет в GetByIdAsync добавить .Include(c => c.Services)
+        if (await _categoryRepository.HasRelatedServicesAsync(category.Id, cancellationToken))
+            throw new HttpException(HttpStatusCode.BadRequest, "Нельзя удалить Категорию: к ней привязаны услуги.");
 
         _categoryRepository.Delete(category);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -18,4 +18,5 @@ public class ServiceDTO
     public Guid? ManufacturerId { get; set; }
     public string? ManufacturerName { get; set; } 
     public bool IsAvailable { get; set; }
+    
 }

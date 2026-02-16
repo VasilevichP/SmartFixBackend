@@ -1,6 +1,8 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.DeviceTypes.Commands.AddDeviceType;
 
@@ -17,6 +19,10 @@ public class AddDeviceTypeCommandHandler: IRequestHandler<AddDeviceTypeCommand>
 
     public async Task Handle(AddDeviceTypeCommand request, CancellationToken cancellationToken)
     {
+        if (await _deviceTypeRepository.ExistsByName(request.Name, cancellationToken))
+        {
+            throw new HttpException(HttpStatusCode.BadRequest,"Тип устройства с таким названием уже существует");
+        }
         var deviceType = DeviceType.Create(request.Name);
 
         await _deviceTypeRepository.AddAsync(deviceType, cancellationToken);

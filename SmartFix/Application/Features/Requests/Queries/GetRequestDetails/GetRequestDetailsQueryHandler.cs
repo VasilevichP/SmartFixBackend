@@ -1,6 +1,8 @@
+using System.Net;
 using MediatR;
 using SmartFix.Application.Features.Requests.DTO;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Requests.Queries.GetRequestDetails;
 
@@ -17,36 +19,41 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
     {
         var requestEntity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
 
-        if (requestEntity == null) throw new Exception("Заявка не найдена");
+        if (requestEntity == null) throw new HttpException(HttpStatusCode.NotFound, "Заявка не найдена");
 
         return new RequestDetailsDto
         {
             Id = requestEntity.Id,
             Status = requestEntity.Status,
-            
+
             DeviceType = requestEntity.DeviceType?.Name ?? "Неизвестно",
             DeviceModel = requestEntity.DeviceModelName,
             DeviceSerialNumber = requestEntity.DeviceSerialNumber,
             Description = requestEntity.Description,
-            
+
             ServiceName = requestEntity.Service?.Name,
-            Price = requestEntity.Service?.Price,
-            WarrantyPeriod = requestEntity.Service.WarrantyPeriod,
-            
+            Price = requestEntity.Price,
+            WarrantyPeriod = requestEntity.Service?.WarrantyPeriod,
+
             CreatedAt = requestEntity.CreatedAt,
             ClosedAt = requestEntity.ClosedAt,
-            
-            ClientName = requestEntity.Client.Name,
-            SpecialistName = requestEntity.Specialist?.FullName,
+
+            ClientId = requestEntity.ClientId,
+            ClientEmail = requestEntity.ContactEmail,
+            ClientName = requestEntity.ContactName,
+            ClientPhone = requestEntity.ContactPhoneNumber,
+
+            SpecialistId = requestEntity.SpecialistId,
+            SpecialistName = requestEntity.Specialist?.Name,
 
             PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList(),
 
             History = requestEntity.StatusHistories
                 .OrderByDescending(h => h.Timestamp)
-                .Select(h => new StatusHistoryDto 
-                { 
-                    Status = h.Status.ToString(), 
-                    Date = h.Timestamp 
+                .Select(h => new StatusHistoryDto
+                {
+                    Status = h.Status,
+                    Date = h.Timestamp
                 }).ToList()
         };
     }

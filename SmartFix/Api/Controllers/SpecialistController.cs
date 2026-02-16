@@ -5,6 +5,7 @@ using SmartFix.Application.Features.Specialists.Commands.AddSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.DeleteSpecialist;
 using SmartFix.Application.Features.Specialists.Commands.UpdateSpecialist;
 using SmartFix.Application.Features.Specialists.Queries.GetAllSpecialists;
+using SmartFix.Application.Features.Specialists.Queries.GetAllWithLoad;
 
 namespace SmartFix.Api.Controllers;
 
@@ -24,6 +25,13 @@ public class SpecialistsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var result = await _mediator.Send(new GetAllSpecialistsQuery());
+        return Ok(result);
+    }
+    
+    [HttpGet("with_load")]
+    public async Task<IActionResult> GetAllWithLoad()
+    {
+        var result = await _mediator.Send(new GetAllSpecialistsWithLoadQuery());
         return Ok(result);
     }
     

@@ -17,9 +17,10 @@ public class DeleteSpecialistCommandHandler : IRequestHandler<DeleteSpecialistCo
     public async Task Handle(DeleteSpecialistCommand request, CancellationToken cancellationToken)
     {
         var specialist = await _specialistRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (specialist == null) return;
-
-        // TODO: проверка наличия заявок
+        if (specialist == null) throw new Exception("Выбранный специалист не найден");
+        
+        if (await _specialistRepository.HasRelatedRequestsAsync(specialist.Id, cancellationToken))
+            throw new InvalidOperationException("Нельзя удалить Специалиста: сперва переназначте заявки.");
 
         _specialistRepository.Delete(specialist);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

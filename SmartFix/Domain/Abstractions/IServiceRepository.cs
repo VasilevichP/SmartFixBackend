@@ -10,7 +10,7 @@ public interface IServiceRepository
     // Task<List<Service>> GetAllForClientAsync(CancellationToken cancellationToken = default);
     // Task<List<Service>> GetAllForManagerAsync(CancellationToken cancellationToken = default);
 
-    Task<List<Service>> GetFilteredAsync(
+    Task<List<Service>> GetFilteredForManagerAsync(
         string? searchTerm,
         bool? status,
         Guid? categoryId,
@@ -19,6 +19,17 @@ public interface IServiceRepository
         Guid? deviceModelId, 
         int sortOrder,
         CancellationToken cancellationToken = default);
+    
+    Task<List<Service>> GetFilteredForClientAsync(
+        string? searchTerm,
+        Guid? categoryId,
+        Guid? deviceTypeId,
+        Guid? manufacturerId,
+        Guid? deviceModelId, 
+        int sortOrder,
+        CancellationToken cancellationToken = default);
 
-    void Delete(Service service);
+    public Task<bool> IsDuplicateAsync(string name, Guid deviceTypeId, Guid? deviceModelId, CancellationToken cancellationToken = default);
+    public Task<bool> HasLinkedRequestsAsync(Guid serviceId, CancellationToken cancellationToken = default);
+    public Task Delete(Service service, CancellationToken cancellationToken = default);
 }

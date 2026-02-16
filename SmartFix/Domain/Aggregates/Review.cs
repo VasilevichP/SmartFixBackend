@@ -1,3 +1,6 @@
+using System.Net;
+using SmartFix.Domain.Exceptions;
+
 namespace SmartFix.Domain.Aggregates;
 
 public class Review
@@ -18,7 +21,7 @@ public class Review
     public static Review Create(Guid serviceId, Guid clientId, int rating, string comment)
     {
         if (rating < 1 || rating > 5)
-            throw new ArgumentException("Рейтинг должен быть от 1 до 5.");
+            throw new HttpException(HttpStatusCode.BadRequest,"Рейтинг должен быть от 1 до 5.");
 
         return new Review
         {

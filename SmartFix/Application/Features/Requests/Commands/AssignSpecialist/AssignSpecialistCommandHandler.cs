@@ -1,10 +1,12 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 using SmartFix.Domain.ValueObjects;
 
 namespace SmartFix.Application.Features.Requests.Commands.AssignSpecialist;
 
-public class AssignSpecialistCommandHandler: IRequestHandler<AssignSpecialistCommand>
+public class AssignSpecialistCommandHandler : IRequestHandler<AssignSpecialistCommand>
 {
     private readonly IRequestRepository _requestRepository;
     private readonly ISpecialistRepository _specialistRepository;
@@ -22,16 +24,15 @@ public class AssignSpecialistCommandHandler: IRequestHandler<AssignSpecialistCom
 
     public async Task Handle(AssignSpecialistCommand request, CancellationToken cancellationToken)
     {
-        var domainRequest = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
-        if (domainRequest == null) throw new Exception("Заявка не найдена");
+        var requestEntity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
+        if (requestEntity == null) throw new HttpException(HttpStatusCode.NotFound, "Заявка не найдена");
 
         var specialist = await _specialistRepository.GetByIdAsync(request.SpecialistId, cancellationToken);
-        if (specialist == null) throw new Exception("Специалист не найден");
+        if (specialist == null) throw new HttpException(HttpStatusCode.NotFound, "Специалист не найден");
 
-        domainRequest.AssignSpecialist(request.SpecialistId);
-        domainRequest.ChangeStatus(RequestStatus.Diagnostics);
+        requestEntity.AssignSpecialist(request.SpecialistId);
 
-        _requestRepository.Update(domainRequest);
+        _requestRepository.Update(requestEntity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

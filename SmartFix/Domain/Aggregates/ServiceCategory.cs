@@ -12,7 +12,6 @@ public class ServiceCategory
 
     public static ServiceCategory Create(string name)
     {
-        // TODO: Добавить валидацию (например, имя не должно быть пустым)
         return new ServiceCategory
         {
             Name = name
@@ -21,7 +20,6 @@ public class ServiceCategory
     
     public void UpdateName(string newName)
     {
-        // TODO: Добавить валидацию
         Name = newName;
     }
 }

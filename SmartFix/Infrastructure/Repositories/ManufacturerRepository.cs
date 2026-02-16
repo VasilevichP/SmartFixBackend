@@ -27,6 +27,13 @@ public class ManufacturerRepository: IManufacturerRepository
     {
         await _context.Manufacturers.AddAsync(manufacturer, cancellationToken);
     }
+    public async Task<bool> HasRelatedModelsAsync(Guid id, CancellationToken ct)
+        => await _context.DeviceModels.AnyAsync(m => m.ManufacturerId == id, ct);
+
+    public async Task<bool> HasRelatedServicesAsync(Guid id, CancellationToken ct)
+        => await _context.Services.AnyAsync(s => s.ManufacturerId == id, ct);
+    public async Task<bool> ExistsByName(string name, CancellationToken ct)
+        => await _context.Manufacturers.AnyAsync(d => d.Name == name,ct);
 
     public void Update(Manufacturer manufacturer)
     {

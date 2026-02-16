@@ -17,7 +17,7 @@ public class GetAllSpecialistsQueryHandler : IRequestHandler<GetAllSpecialistsQu
     {
         var specialists = await _specialistRepository.GetAllAsync(cancellationToken);
         return specialists
-            .Select(s => new SpecialistDto { Id = s.Id, FullName = s.FullName })
+            .Select(s => new SpecialistDto { Id = s.Id, Name = s.Name })
             .ToList();
     }
 }

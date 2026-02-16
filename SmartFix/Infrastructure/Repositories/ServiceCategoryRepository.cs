@@ -28,6 +28,10 @@ public class ServiceCategoryRepository : IServiceCategoryRepository
     {
         await _context.ServiceCategories.AddAsync(category, cancellationToken);
     }
+    public async Task<bool> HasRelatedServicesAsync(Guid id, CancellationToken ct)
+        => await _context.Services.AnyAsync(s => s.CategoryId == id, ct);
+    public async Task<bool> ExistsByName(string name, CancellationToken ct)
+        => await _context.ServiceCategories.AnyAsync(с => с.Name == name,ct);
 
     public void Update(ServiceCategory category)
     {

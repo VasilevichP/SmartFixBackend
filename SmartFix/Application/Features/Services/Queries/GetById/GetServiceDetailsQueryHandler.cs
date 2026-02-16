@@ -1,11 +1,13 @@
+using System.Net;
 using MediatR;
 using SmartFix.Application.Features.Reviews.DTO;
 using SmartFix.Application.Features.Services.DTO;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Services.Queries.GetById;
 
-public class GetServiceDetailsQueryHandler: IRequestHandler<GetServiceDetailsQuery, ServiceDetailsDto>
+public class GetServiceDetailsQueryHandler : IRequestHandler<GetServiceDetailsQuery, ServiceDetailsDto>
 {
     private readonly IServiceRepository _serviceRepository;
 
@@ -17,10 +19,10 @@ public class GetServiceDetailsQueryHandler: IRequestHandler<GetServiceDetailsQue
     public async Task<ServiceDetailsDto> Handle(GetServiceDetailsQuery request, CancellationToken cancellationToken)
     {
         var service = await _serviceRepository.GetByIdAsync(request.ServiceId, cancellationToken);
-        
+
         if (service == null)
-            throw new Exception("Услуга не найдена");
-        
+            throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена");
+
         double avgRating = 0;
         if (service.Reviews.Any())
         {
@@ -34,15 +36,19 @@ public class GetServiceDetailsQueryHandler: IRequestHandler<GetServiceDetailsQue
             Description = service.Description,
             Price = service.Price,
             WarrantyPeriod = service.WarrantyPeriod,
+            CategoryId = service.CategoryId,
             CategoryName = service.Category.Name,
+            DeviceTypeId = service.DeviceTypeId,
             DeviceTypeName = service.DeviceType.Name,
+            DeviceModelId = service.DeviceModelId,
             DeviceModelName = service.DeviceModel?.Name,
+            ManufacturerId = service.ManufacturerId,
             ManufacturerName = service.Manufacturer?.Name,
             IsAvailable = service.IsAvailable,
-            
+
             ReviewsCount = service.Reviews.Count,
-            AverageRating = Math.Round(avgRating, 1), 
-            
+            AverageRating = Math.Round(avgRating, 1),
+
             Reviews = service.Reviews.OrderByDescending(r => r.CreatedAt).Select(r => new ReviewDto
             {
                 Id = r.Id,

@@ -1,8 +1,10 @@
+using System.Net;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using SmartFix.Application.Authentication;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Users.Commands.AuthorizeUser;
 
@@ -24,12 +26,12 @@ public class AuthorizeUserCommandHandler: IRequestHandler<AuthorizeUserCommand, 
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null)
         {
-            throw new Exception("Неправильный логин или пароль");
+            throw new HttpException(HttpStatusCode.BadRequest, "Неправильный логин или пароль");
         }
 
         if (!_passwordHasher.VerifyPassword(user.PasswordHash,request.Password))
         {
-            throw new Exception("Неправильный логин или пароль");
+            throw new HttpException(HttpStatusCode.BadRequest, "Неправильный логин или пароль");
         }
         
         var token = _jwtProvider.GenerateToken(user);

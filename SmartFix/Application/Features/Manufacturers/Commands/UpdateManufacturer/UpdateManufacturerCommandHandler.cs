@@ -1,5 +1,7 @@
+using System.Net;
 using MediatR;
 using SmartFix.Domain.Abstractions;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Features.Manufacturers.Commands.UpdateManufacturer;
 
@@ -17,12 +19,19 @@ public class UpdateManufacturerCommandHandler: IRequestHandler<UpdateManufacture
     public async Task Handle(UpdateManufacturerCommand request, CancellationToken cancellationToken)
     {
         var manufacturer = await _manufacturerRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (manufacturer == null) 
-            throw new Exception($"Производитель с ID {request.Id} не найден.");
+        if (manufacturer == null)
+            throw new HttpException(HttpStatusCode.NotFound,"Выбранный производитель не найден");
+        if (manufacturer.Name != request.Name)
+        {
+            if (await _manufacturerRepository.ExistsByName(request.Name, cancellationToken))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest,"Производитель с таким названием уже существует");
+            }
 
-        manufacturer.Update(request.Name);
-        
-        _manufacturerRepository.Update(manufacturer);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            manufacturer.Update(request.Name);
+
+            _manufacturerRepository.Update(manufacturer);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
     }
 }
