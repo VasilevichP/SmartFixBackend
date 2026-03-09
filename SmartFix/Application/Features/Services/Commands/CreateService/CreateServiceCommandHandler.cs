@@ -45,6 +45,7 @@ public class CreateServiceCommandHandler : IRequestHandler<CreateServiceCommand>
         }
 
         bool isDuplicate = await _serviceRepository.IsDuplicateAsync(
+            null,
             request.Name,
             request.DeviceTypeId,
             request.DeviceModelId,

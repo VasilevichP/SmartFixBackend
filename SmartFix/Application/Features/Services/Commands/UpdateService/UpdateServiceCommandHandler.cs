@@ -24,7 +24,7 @@ public class UpdateServiceCommandHandler : IRequestHandler<UpdateServiceCommand>
         var service = await _serviceRepository.GetByIdAsync(request.Id, cancellationToken);
         if (service == null)
         {
-            throw new HttpException(HttpStatusCode.NotFound, $"Услуга с ID {request.Id} не найдена.");
+            throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена.");
         }
 
         if (request.DeviceModelId.HasValue)
@@ -42,6 +42,19 @@ public class UpdateServiceCommandHandler : IRequestHandler<UpdateServiceCommand>
                     throw new HttpException(HttpStatusCode.BadRequest,
                         $"Модель '{dbModel.Name}' не принадлежит выбранному производителю.");
             }
+        }
+
+        bool isDuplicate = await _serviceRepository.IsDuplicateAsync(
+            request.Id,
+            request.Name,
+            request.DeviceTypeId,
+            request.DeviceModelId,
+            cancellationToken);
+
+        if (isDuplicate)
+        {
+            throw new HttpException(HttpStatusCode.BadRequest,
+                "Услуга с таким названием для данного устройства уже существует.");
         }
 
         service.UpdateDetails(request.Name, request.Price, request.Description, request.WarrantyPeriod,

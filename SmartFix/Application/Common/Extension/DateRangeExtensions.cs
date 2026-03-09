@@ -1,4 +1,6 @@
+using System.Net;
 using SmartFix.Application.Common.Interfaces;
+using SmartFix.Domain.Exceptions;
 
 namespace SmartFix.Application.Common.Extension;
 
@@ -9,10 +11,11 @@ public static class DateRangeExtensions
         DateTime endDate = DateTime.UtcNow;
         DateTime startDate;
 
-        if (request.Period == "custom" && request.From.HasValue && request.To.HasValue)
+        if (request.Period == "custom")
         {
-            startDate = request.From.Value.Date;
-            endDate = request.To.Value.Date.AddDays(1).AddTicks(-1);
+            startDate = request.From.HasValue ? request.From.Value.Date : endDate.AddDays(-30);
+            if (request.To.HasValue)
+                endDate = request.To.Value.Date.AddDays(1).AddTicks(-1);
         }
         else
         {
@@ -23,6 +26,11 @@ public static class DateRangeExtensions
                 _ => endDate.AddDays(-30) // "month" по умолчанию
             };
         }
+        if ((endDate - startDate).TotalDays > 366)
+        {
+            throw new HttpException(HttpStatusCode.BadRequest,"Период отчета не может превышать 1 год. Пожалуйста, уменьшите диапазон дат.");
+        }
+
 
         return (startDate, endDate);
     }

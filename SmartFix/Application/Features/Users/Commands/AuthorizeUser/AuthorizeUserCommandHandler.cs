@@ -23,7 +23,7 @@ public class AuthorizeUserCommandHandler: IRequestHandler<AuthorizeUserCommand, 
 
     public async Task<string> Handle(AuthorizeUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
+        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
         if (user == null)
         {
             throw new HttpException(HttpStatusCode.BadRequest, "Неправильный логин или пароль");

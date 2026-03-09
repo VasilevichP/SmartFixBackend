@@ -15,10 +15,9 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<int> AddAsync(User user, CancellationToken cancellationToken = default)
+    public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);
-        return await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)

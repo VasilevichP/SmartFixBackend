@@ -19,7 +19,7 @@ public class RequestRepository : IRequestRepository
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
-            .Include(r => r.Service)
+            .Include(r => r.Services)
             .Include(r => r.Client)
             .Include(r => r.DeviceType)
             .Include(r => r.Specialist)
@@ -33,7 +33,7 @@ public class RequestRepository : IRequestRepository
     {
         var query = _context.Requests
             .Include(r => r.Client)
-            .Include(r => r.Service)
+            .Include(r => r.Services)
             .Include(r => r.Specialist)
             .AsQueryable();
 
@@ -47,12 +47,6 @@ public class RequestRepository : IRequestRepository
         {
             query = query.Where(r => 
                 r.DeviceModelName.ToLower().Contains(device)
-            );
-        }
-        if (!string.IsNullOrWhiteSpace(service))
-        {
-            query = query.Where(r => 
-                r.Service != null && r.Service.Name.ToLower().Contains(service)
             );
         }
 
@@ -73,7 +67,7 @@ public class RequestRepository : IRequestRepository
     public async Task<List<Request>> GetAllForClientAsync(Guid clientId, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
-            .Include(r => r.Service)
+            .Include(r => r.Services)
             .OrderByDescending(r => r.CreatedAt)
             .Where(r => r.ClientId == clientId)
             .OrderByDescending(r => r.CreatedAt)

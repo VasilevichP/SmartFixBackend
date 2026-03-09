@@ -12,16 +12,15 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IJwtProvider _jwtProvider;
+    private readonly IUnitOfWork _unitOfWork;
 
     public RegisterUserCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
-        IJwtProvider jwtProvider)
+        IPasswordHasher passwordHasher, IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
-        _jwtProvider = jwtProvider;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(RegisterUserCommand request, CancellationToken cancellationToken)
@@ -49,10 +48,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
             user = User.CreateManager(request.Email, passwordHash);
         }
 
-        var numOfAddedEntities = await _userRepository.AddAsync(user);
-        if(numOfAddedEntities == 0) 
-        {
-            throw new HttpException(HttpStatusCode.InternalServerError, "Возникла ошибка при добавлении в базу данных");
-        }
+        await _userRepository.AddAsync(user, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

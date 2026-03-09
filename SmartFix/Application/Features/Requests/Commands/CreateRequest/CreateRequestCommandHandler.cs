@@ -11,33 +11,47 @@ namespace SmartFix.Application.Features.Requests.Commands.CreateRequest;
 public class CreateRequestCommandHandler : IRequestHandler<CreateRequestCommand, Guid>
 {
     private readonly IRequestRepository _requestRepository;
+    private readonly IServiceRepository _serviceRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IFileService _fileService;
     private readonly IPublisher _publisher;
 
     public CreateRequestCommandHandler(IRequestRepository requestRepository, IUnitOfWork unitOfWork,
-        IFileService fileService, IPublisher publisher)
+        IFileService fileService, IPublisher publisher, IServiceRepository serviceRepository)
     {
         _requestRepository = requestRepository;
         _unitOfWork = unitOfWork;
         _fileService = fileService;
         _publisher = publisher;
+        _serviceRepository = serviceRepository;
     }
 
     public async Task<Guid> Handle(CreateRequestCommand request, CancellationToken cancellationToken)
     {
+        Service? service = null;
+        if (request.ServiceId.HasValue)
+        {
+            service = await _serviceRepository.GetByIdAsync(request.ServiceId.Value, cancellationToken);
+            if (service == null)
+            {
+                throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена.");
+            }
+        }
+
+
         var domainRequest = Request.Create(
             clientId: request.ClientId,
-            contactEmail: request.ContactEmail,
-            contactPhone: request.ContactPhoneNumber,
-            contactName: request.ContactName,
             deviceTypeId: request.DeviceTypeId,
-            description: request.Description,
-            price: request.Price,
-            serviceId: request.ServiceId,
-            deviceModelId: request.DeviceModelId,
             deviceModelName: request.DeviceModelName,
-            deviceSerialNumber: request.DeviceSerialNumber
+            description: request.Description,
+            contactName: request.ContactName,
+            contactPhone: request.ContactPhoneNumber,
+            contactEmail: request.ContactEmail,
+            isCourier: request.IsCourierDelivery,
+            address: request.Address,
+            serialNumber: request.DeviceSerialNumber,
+            deviceModelId: request.DeviceModelId,
+            initialService: service
         );
         if (request.Photos != null && request.Photos.Count > 0)
         {

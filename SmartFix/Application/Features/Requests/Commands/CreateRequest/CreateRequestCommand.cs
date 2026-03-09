@@ -14,6 +14,8 @@ public class CreateRequestCommand : IRequest<Guid>
     public string ContactPhoneNumber { get; set; } = string.Empty;
 
     public string ContactName { get; set; } = string.Empty;
+    public bool IsCourierDelivery { get; set; }
+    public string? Address { get; set; }
     public decimal? Price { get; set; }
     public string Description { get; set; }
     public string DeviceSerialNumber { get; set; }

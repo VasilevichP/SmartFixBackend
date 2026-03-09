@@ -8,6 +8,7 @@ using SmartFix.Application.Features.Services.Commands.UpdateService;
 using SmartFix.Application.Features.Services.Queries;
 using SmartFix.Application.Features.Services.Queries.GetAllForClient;
 using SmartFix.Application.Features.Services.Queries.GetAllForManager;
+using SmartFix.Application.Features.Services.Queries.GetAllForRequest;
 
 namespace SmartFix.Api.Controllers;
 
@@ -35,6 +36,14 @@ public class ServicesController : ControllerBase
     public async Task<IActionResult> GetManagerServices([FromQuery] GetAllServicesForManagerQuery filterParams)
     {
         var result = await _mediator.Send(filterParams);
+        return Ok(result);
+    }
+    
+    [HttpGet("request-list")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> GetServicesForRequest()
+    {
+        var result = await _mediator.Send(new GetAllServicesForRequestQuery());
         return Ok(result);
     }
 

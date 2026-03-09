@@ -21,7 +21,8 @@ public class StatisticsRepository : IStatisticsRepository
         var query = _context.Requests.AsNoTracking().Where(r => r.CreatedAt >= start && r.CreatedAt <= end);
 
         stats.NewRequestsCount = await query.CountAsync(ct);
-        stats.ClosedRequestsCount = await query.CountAsync(r => r.Status == RequestStatus.Closed, ct);
+        stats.ClosedRequestsCount = await _context.Requests.AsNoTracking()
+            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end).CountAsync();
 
         var allReviews = _context.Reviews.AsNoTracking();
         if (await allReviews.AnyAsync(ct))
@@ -29,9 +30,8 @@ public class StatisticsRepository : IStatisticsRepository
             stats.AverageRating = Math.Round(await allReviews.AverageAsync(r => r.Rating, ct), 1);
         }
 
-        // Среднее время ремонта (только по закрытым в этом периоде)
-        var closedRequests = await query
-            .Where(r => r.Status == RequestStatus.Closed && r.ClosedAt.HasValue)
+        var closedRequests = await _context.Requests.AsNoTracking()
+            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end)
             .Select(r => new { Start = r.CreatedAt, End = r.ClosedAt.Value })
             .ToListAsync(ct);
 
@@ -41,7 +41,6 @@ public class StatisticsRepository : IStatisticsRepository
             stats.AvgRepairTimeHours = Math.Round(totalHours / closedRequests.Count, 1);
         }
 
-        // Динамика
         var dynamics = await query
             .GroupBy(r => r.CreatedAt.Date)
             .Select(g => new { Date = g.Key, Count = g.Count() })
@@ -50,8 +49,7 @@ public class StatisticsRepository : IStatisticsRepository
         stats.RequestsDynamics = dynamics
             .Select(d => new DateValueDto { Date = d.Date.ToString("dd.MM"), Value = d.Count }).ToList();
 
-        // Статусы (Перевод на русский)
-        var statusData = await query
+        var statusData = await _context.Requests.AsNoTracking()
             .GroupBy(r => r.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(ct);
@@ -65,6 +63,16 @@ public class StatisticsRepository : IStatisticsRepository
 
         return stats;
     }
+    
+    public async Task<Dictionary<DateTime, int>> GetDailyRequestsCountAsync(DateTime start, DateTime end, CancellationToken ct)
+    {
+        return await _context.Requests
+            .AsNoTracking()
+            .Where(r => r.CreatedAt >= start && r.CreatedAt <= end)
+            .GroupBy(r => r.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Date, x => x.Count, ct);
+    }
 
     public async Task<ServicesStatsDto> LoadServicesStats(DateTime start, DateTime end, CancellationToken ct)
     {
@@ -72,25 +80,13 @@ public class StatisticsRepository : IStatisticsRepository
 
         var totalRevenue = await _context.Requests
             .AsNoTracking()
-            .Where(r => r.CreatedAt >= start && r.CreatedAt <= end && r.Price != null)
+            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end && r.Price != null)
             .SumAsync(r => r.Price);
-        stats.TotalRevenue = totalRevenue ?? 0;
-
-        // Топ 5 услуг по количеству заявок
-        var topServices = await _context.Requests
-            .AsNoTracking()
-            .Where(r => r.CreatedAt >= start && r.CreatedAt <= end && r.ServiceId != null)
-            .GroupBy(r => r.Service.Name)
-            .Select(g => new { Name = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .Take(5)
-            .ToListAsync(ct);
-        stats.TopServices = topServices.Select(x => new LabelValueDto { Label = x.Name, Value = x.Count }).ToList();
-
-        // Выручка по типам устройств
+        stats.TotalRevenue = totalRevenue;
+     
         var deviceData = await _context.Requests
-            .GroupBy(r => r.DeviceType.Name) // Группируем по названию типа (Смартфон, Ноутбук)
-            .Select(g => new { Type = g.Key, Revenue = g.Sum(r => r.Price ?? 0) })
+            .GroupBy(r => r.DeviceType.Name)
+            .Select(g => new { Type = g.Key, Revenue = g.Sum(r => r.Price) })
             .ToListAsync(ct);
         stats.RevenueByDeviceType =
             deviceData.Select(d => new LabelValueDto { Label = d.Type, Value = (double)d.Revenue }).ToList();
@@ -103,8 +99,6 @@ public class StatisticsRepository : IStatisticsRepository
         var stats = new ClientsStatsDto();
         stats.TotalClients = await _context.Users.CountAsync(u => u.Role == Role.Client, ct);
 
-        // Повторные обращения (Retention)
-        // Считаем клиентов, у которых > 1 заявки (за всё время, так как это характеристика базы)
         var returningClients = await _context.Requests
             .AsNoTracking()
             .GroupBy(r => r.ClientId)
@@ -129,26 +123,20 @@ public class StatisticsRepository : IStatisticsRepository
         {
             var specRequests = _context.Requests
                 .AsNoTracking()
-                .Where(r => r.SpecialistId == spec.Id && r.CreatedAt >= start && r.CreatedAt <= end);
-
+                .Where(r => r.SpecialistId == spec.Id && r.ClosedAt >= start && r.ClosedAt <= end);
             var closedCount = await specRequests
-                .CountAsync(r => r.Status == RequestStatus.Closed, ct);
+                .CountAsync(ct);
 
-            // B. Количество в работе (все активные, не закрытые и не отмененные)
-            // Тут берем срез "на данный момент", поэтому дату start/end можно убрать или оставить по желанию
-            // (Обычно "В работе" интересно на текущий момент, без привязки к дате создания)
             var activeCount = await _context.Requests
                 .CountAsync(r => r.SpecialistId == spec.Id
                                  && r.Status != RequestStatus.Closed
                                  && r.Status != RequestStatus.Cancelled, ct);
-    
+
             double avgTime = 0;
 
-            // Проверяем, есть ли закрытые заявки, чтобы не делить на ноль
             if (closedCount > 0)
             {
                 avgTime = await specRequests
-                    .Where(r => r.Status == RequestStatus.Closed && r.ClosedAt.HasValue)
                     .AverageAsync(r => EF.Functions.DateDiffHour(r.CreatedAt, r.ClosedAt.Value), ct);
             }
 
@@ -161,7 +149,6 @@ public class StatisticsRepository : IStatisticsRepository
             });
         }
 
-        // Сортируем топ по продуктивности
         stats.Performance = resultList
             .OrderByDescending(x => x.ClosedCount)
             .ToList();
@@ -169,4 +156,3 @@ public class StatisticsRepository : IStatisticsRepository
         return stats;
     }
 }
-

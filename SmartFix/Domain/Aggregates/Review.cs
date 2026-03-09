@@ -25,7 +25,6 @@ public class Review
 
         return new Review
         {
-            Id = Guid.NewGuid(),
             ServiceId = serviceId,
             ClientId = clientId,
             Rating = rating,

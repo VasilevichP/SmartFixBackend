@@ -22,8 +22,8 @@ public class ReviewsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateReviewCommand command)
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
-
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized("Не удалось определить пользователя");
         command.ClientId = userId;
         await _mediator.Send(command);
         return Ok();

@@ -17,7 +17,21 @@ public class GetGeneralStatsQueryHandler : IRequestHandler<GetGeneralStatisticsQ
     public async Task<GeneralStatsDto> Handle(GetGeneralStatisticsQuery request, CancellationToken cancellationToken)
     {
         var (startDate, endDate) = request.CalculateDateRange();
+        var stats = await _repository.LoadGeneralKpis(startDate, endDate, cancellationToken);
+        var dbData = await _repository.GetDailyRequestsCountAsync(startDate, endDate, cancellationToken);
 
-        return await _repository.LoadGeneralKpis(startDate, endDate, cancellationToken);
+        var fullList = new List<DateValueDto>();
+    
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            fullList.Add(new DateValueDto
+            {
+                Date = date.ToString("dd.MM"),
+                Value = dbData.GetValueOrDefault(date) 
+            });
+        }
+        stats.RequestsDynamics = fullList;
+
+        return stats;
     }
 }

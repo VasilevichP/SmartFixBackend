@@ -26,8 +26,7 @@ public class GetAllRequestsQueryHandler: IRequestHandler<GetAllRequestsQuery, Li
         return requests.Select(r => new RequestsBriefDto
         {
             Id = r.Id,
-            ClientName = r.Client.Name,
-            ServiceName = r.Service?.Name ?? "Индивидуальная услуга",
+            ClientName = r.ContactName,
             DeviceModelName = r.DeviceModelName,
             CreatedAt = r.CreatedAt,
             Status = r.Status,

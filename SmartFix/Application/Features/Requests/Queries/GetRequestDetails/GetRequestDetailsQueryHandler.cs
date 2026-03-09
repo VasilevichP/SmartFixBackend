@@ -31,9 +31,12 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
             DeviceSerialNumber = requestEntity.DeviceSerialNumber,
             Description = requestEntity.Description,
 
-            ServiceName = requestEntity.Service?.Name,
             Price = requestEntity.Price,
-            WarrantyPeriod = requestEntity.Service?.WarrantyPeriod,
+            Appearance = requestEntity.DeviceAppearance,
+            Package = requestEntity.DevicePackage,
+            
+            DiagnosticResult = requestEntity.DiagnosticResult,
+            CancellationReason = requestEntity.CancellationReason,
 
             CreatedAt = requestEntity.CreatedAt,
             ClosedAt = requestEntity.ClosedAt,
@@ -42,9 +45,21 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
             ClientEmail = requestEntity.ContactEmail,
             ClientName = requestEntity.ContactName,
             ClientPhone = requestEntity.ContactPhoneNumber,
+            IsCourierDelivery = requestEntity.IsCourierDelivery,
+            Address = requestEntity.DeliveryAddress,
+            DeliveryCost = requestEntity.DeliveryCost,
 
             SpecialistId = requestEntity.SpecialistId,
             SpecialistName = requestEntity.Specialist?.Name,
+            
+            Services = requestEntity.Services
+                .Select(r=> new RequestServiceDto
+                {
+                    Id = r.Id,
+                    ServiceId = r.ServiceId,
+                    ServiceName = r.ServiceName,
+                    Price = r.Price,
+                }).ToList(),
 
             PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList(),
 
