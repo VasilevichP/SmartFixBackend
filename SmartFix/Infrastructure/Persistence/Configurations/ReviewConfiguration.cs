@@ -17,9 +17,9 @@ public class ReviewConfiguration:IEntityTypeConfiguration<Review>
             .HasForeignKey(r => r.ClientId)
             .OnDelete(DeleteBehavior.Restrict); 
             
-        builder.HasOne(r => r.Service)
-            .WithMany(s => s.Reviews)
-            .HasForeignKey(r => r.ServiceId)
+        builder.HasOne(r => r.Request)
+            .WithOne()
+            .HasForeignKey<Review>(r=>r.RequestId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

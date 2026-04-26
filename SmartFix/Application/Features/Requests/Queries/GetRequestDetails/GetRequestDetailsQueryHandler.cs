@@ -24,52 +24,58 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
         return new RequestDetailsDto
         {
             Id = requestEntity.Id,
+            Type = requestEntity.Type,
             Status = requestEntity.Status,
-
-            DeviceType = requestEntity.DeviceType?.Name ?? "Неизвестно",
-            DeviceModel = requestEntity.DeviceModelName,
-            DeviceSerialNumber = requestEntity.DeviceSerialNumber,
-            Description = requestEntity.Description,
-
-            Price = requestEntity.Price,
-            Appearance = requestEntity.DeviceAppearance,
-            Package = requestEntity.DevicePackage,
-            
-            DiagnosticResult = requestEntity.DiagnosticResult,
-            CancellationReason = requestEntity.CancellationReason,
-
             CreatedAt = requestEntity.CreatedAt,
             ClosedAt = requestEntity.ClosedAt,
-
-            ClientId = requestEntity.ClientId,
-            ClientEmail = requestEntity.ContactEmail,
-            ClientName = requestEntity.ContactName,
-            ClientPhone = requestEntity.ContactPhoneNumber,
-            IsCourierDelivery = requestEntity.IsCourierDelivery,
-            Address = requestEntity.DeliveryAddress,
-            DeliveryCost = requestEntity.DeliveryCost,
-
-            SpecialistId = requestEntity.SpecialistId,
-            SpecialistName = requestEntity.Specialist?.Name,
             
-            Services = requestEntity.Services
-                .Select(r=> new RequestServiceDto
+            ClientId = requestEntity.ClientId,
+            ContactName = requestEntity.ContactName,
+            ContactPhone = requestEntity.ContactPhoneNumber,
+            ContactEmail = requestEntity.ContactEmail,
+            
+            DeviceTypeName = requestEntity.DeviceType?.Name ?? "Неизвестно",
+            DeviceModelName = requestEntity.DeviceModelName,
+            DeviceSerialNumber = requestEntity.DeviceSerialNumber,
+            Description = requestEntity.Description,
+            
+            DiagnosticResult = requestEntity.DiagnosticResult,
+            DeviceAppearance = requestEntity.DeviceAppearance,
+            DevicePackage = requestEntity.DevicePackage,
+            
+            FieldAddress = requestEntity.FieldAddress,
+            ScheduledTime = requestEntity.ScheduledTime,
+            ParentRequestId = requestEntity.ParentRequestId,
+            
+            BasePrice = requestEntity.BasePrice,
+            FinalPrice = requestEntity.FinalPrice,
+            
+            MasterId = requestEntity.MasterId,
+            MasterName = requestEntity.Master?.Name,
+           
+            Services = requestEntity.Services.Select(s => new RequestServiceDto
+            {
+                Id = s.Id,
+                ServiceId = s.ServiceId,
+                ServiceName = s.ServiceName,
+                Price = s.Price
+            }).ToList(),
+
+            AppliedDiscounts = requestEntity.AppliedDiscounts.Select(d => new RequestDiscountDto
+            {
+                Id = d.Id,
+                Name = d.RuleName,
+                SavedAmount = d.SavedAmount
+            }).ToList(),
+
+            StatusHistories = requestEntity.StatusHistories
+                .OrderBy(sh => sh.Timestamp)
+                .Select(sh => new StatusHistoryDto
                 {
-                    Id = r.Id,
-                    ServiceId = r.ServiceId,
-                    ServiceName = r.ServiceName,
-                    Price = r.Price,
+                    Status = sh.Status,
+                    Date = sh.Timestamp
                 }).ToList(),
-
-            PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList(),
-
-            History = requestEntity.StatusHistories
-                .OrderByDescending(h => h.Timestamp)
-                .Select(h => new StatusHistoryDto
-                {
-                    Status = h.Status,
-                    Date = h.Timestamp
-                }).ToList()
+            PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList()
         };
     }
 }

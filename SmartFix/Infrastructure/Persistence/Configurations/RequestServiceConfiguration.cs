@@ -9,6 +9,7 @@ public class RequestServiceConfiguration:IEntityTypeConfiguration<RequestService
     public void Configure(EntityTypeBuilder<RequestService> builder)
     {
         builder.HasKey(r => r.Id);
+        builder.Property(r => r.Price).HasColumnType("decimal(18,2)");
             
         builder.HasOne(r => r.Request)
             .WithMany(r=>r.Services)

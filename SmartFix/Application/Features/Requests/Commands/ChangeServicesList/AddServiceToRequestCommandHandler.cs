@@ -35,16 +35,8 @@ public class AddServiceToRequestCommandHandler: IRequestHandler<AddServiceToRequ
             {
                 throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена.");
             }
-            requestEntity.AddService(service);
         }
-        else
-        {
-            if (!request.ServicePrice.HasValue)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "Укажите цену добавленной услуги");
-            }
-            requestEntity.AddService(request.ServiceName, request.ServicePrice.Value);
-        }
+        requestEntity.AddService(request.ServiceId, request.ServiceName, request.ServicePrice);
         _requestRepository.Update(requestEntity);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }

@@ -27,8 +27,6 @@ public class ServiceRepository : IServiceRepository
             .Include(s => s.DeviceModel)
             .ThenInclude(s => s.Manufacturer)
             .Include(s => s.DeviceType)
-            .Include(s => s.Reviews)
-            .ThenInclude(r => r.Client)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 

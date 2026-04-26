@@ -11,5 +11,10 @@ public class RequestPhotoConfiguration:IEntityTypeConfiguration<RequestPhoto>
         builder.HasKey(p => p.Id);
         builder.Property(p => p.FileName).IsRequired().HasMaxLength(255);
         builder.Property(p => p.FilePath).IsRequired().HasMaxLength(500);
+        
+        builder.HasOne(p=>p.Request)
+            .WithMany(p=>p.Photos)
+            .HasForeignKey(p=>p.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -16,17 +16,7 @@ public class RequestService
 
     private RequestService() { }
 
-    public static RequestService Create(Guid requestId, Service service)
-    {
-        return new RequestService
-        {
-            RequestId = requestId,
-            ServiceId = service.Id,
-            ServiceName = service.Name,
-            Price = service.Price
-        };
-    }
-    public static RequestService Create(Guid requestId, string name,decimal price)
+    public static RequestService Create(Guid requestId, Guid? serviceId, string name,decimal price)
     {
         if (string.IsNullOrWhiteSpace(name)) 
             throw new HttpException(HttpStatusCode.BadRequest,"Название работы не может быть пустым.");
@@ -35,7 +25,9 @@ public class RequestService
             throw new HttpException(HttpStatusCode.BadRequest,"Цена работы не может быть отрицательной.");
         return new RequestService
         {
+            Id = Guid.NewGuid(),
             RequestId = requestId,
+            ServiceId = serviceId,
             ServiceName = name,
             Price = price
         };

@@ -27,7 +27,7 @@ public class ReviewRepository: IReviewRepository
     public async Task<List<Review>> GetAllByServiceAsync(Guid serviceId, CancellationToken cancellationToken = default)
     {
         return await _context.Reviews
-            .Where(r => r.ServiceId == serviceId)
+            .Where(r => r.RequestId == serviceId)
             .ToListAsync(cancellationToken);
     }
 

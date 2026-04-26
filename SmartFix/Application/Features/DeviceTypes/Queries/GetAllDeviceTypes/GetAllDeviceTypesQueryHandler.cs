@@ -1,6 +1,5 @@
 using MediatR;
 using SmartFix.Application.Features.DeviceTypes.DTO;
-using SmartFix.Application.Features.Specialists.DTO;
 using SmartFix.Domain.Abstractions;
 
 namespace SmartFix.Application.Features.DeviceTypes.Queries.GetAllDeviceTypes;

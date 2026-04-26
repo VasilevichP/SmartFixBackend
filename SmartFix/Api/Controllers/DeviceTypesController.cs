@@ -40,7 +40,7 @@ public class DeviceTypesController : ControllerBase
     public async Task<IActionResult> Update([FromBody] UpdateDeviceTypeCommand command)
     {
         await _mediator.Send(command);
-        return Ok();
+        return NoContent();
     }
     
     [HttpDelete]
@@ -48,6 +48,6 @@ public class DeviceTypesController : ControllerBase
     public async Task<IActionResult> Delete([FromBody] DeleteDeviceTypeCommand command)
     {
         await _mediator.Send(command);
-        return Ok();
+        return NoContent();
     }
 }

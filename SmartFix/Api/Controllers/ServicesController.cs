@@ -38,7 +38,7 @@ public class ServicesController : ControllerBase
         var result = await _mediator.Send(filterParams);
         return Ok(result);
     }
-    
+        
     [HttpGet("request-list")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetServicesForRequest()

@@ -78,18 +78,18 @@ public class StatisticsRepository : IStatisticsRepository
     {
         var stats = new ServicesStatsDto();
 
-        var totalRevenue = await _context.Requests
-            .AsNoTracking()
-            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end && r.Price != null)
-            .SumAsync(r => r.Price);
-        stats.TotalRevenue = totalRevenue;
-     
-        var deviceData = await _context.Requests
-            .GroupBy(r => r.DeviceType.Name)
-            .Select(g => new { Type = g.Key, Revenue = g.Sum(r => r.Price) })
-            .ToListAsync(ct);
-        stats.RevenueByDeviceType =
-            deviceData.Select(d => new LabelValueDto { Label = d.Type, Value = (double)d.Revenue }).ToList();
+        // var totalRevenue = await _context.Requests
+        //     .AsNoTracking()
+        //     .Where(r => r.ClosedAt >= start && r.ClosedAt <= end && r.Price != null)
+        //     .SumAsync(r => r.Price);
+        // stats.TotalRevenue = totalRevenue;
+        //
+        // var deviceData = await _context.Requests
+        //     .GroupBy(r => r.DeviceType.Name)
+        //     .Select(g => new { Type = g.Key, Revenue = g.Sum(r => r.Price) })
+        //     .ToListAsync(ct);
+        // stats.RevenueByDeviceType =
+        //     deviceData.Select(d => new LabelValueDto { Label = d.Type, Value = (double)d.Revenue }).ToList();
 
         return stats;
     }
@@ -97,15 +97,15 @@ public class StatisticsRepository : IStatisticsRepository
     public async Task<ClientsStatsDto> LoadClientStats(DateTime start, DateTime end, CancellationToken ct)
     {
         var stats = new ClientsStatsDto();
-        stats.TotalClients = await _context.Users.CountAsync(u => u.Role == Role.Client, ct);
-
-        var returningClients = await _context.Requests
-            .AsNoTracking()
-            .GroupBy(r => r.ClientId)
-            .Where(g => g.Count() > 1)
-            .CountAsync(ct);
-
-        stats.ReturningClientsCount = returningClients;
+        // stats.TotalClients = await _context.Clients.CountAsync(u => u.Role == Role.Client, ct);
+        //
+        // var returningClients = await _context.Requests
+        //     .AsNoTracking()
+        //     .GroupBy(r => r.ClientId)
+        //     .Where(g => g.Count() > 1)
+        //     .CountAsync(ct);
+        //
+        // stats.ReturningClientsCount = returningClients;
 
         return stats;
     }
@@ -113,45 +113,45 @@ public class StatisticsRepository : IStatisticsRepository
     public async Task<SpecialistsStatsDto> LoadSpecialistStats(DateTime start, DateTime end, CancellationToken ct)
     {
         var stats = new SpecialistsStatsDto();
-        var specialists = await _context.Specialists
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        var resultList = new List<SpecialistPerformanceDto>();
-
-        foreach (var spec in specialists)
-        {
-            var specRequests = _context.Requests
-                .AsNoTracking()
-                .Where(r => r.SpecialistId == spec.Id && r.ClosedAt >= start && r.ClosedAt <= end);
-            var closedCount = await specRequests
-                .CountAsync(ct);
-
-            var activeCount = await _context.Requests
-                .CountAsync(r => r.SpecialistId == spec.Id
-                                 && r.Status != RequestStatus.Closed
-                                 && r.Status != RequestStatus.Cancelled, ct);
-
-            double avgTime = 0;
-
-            if (closedCount > 0)
-            {
-                avgTime = await specRequests
-                    .AverageAsync(r => EF.Functions.DateDiffHour(r.CreatedAt, r.ClosedAt.Value), ct);
-            }
-
-            resultList.Add(new SpecialistPerformanceDto
-            {
-                Name = spec.Name,
-                ClosedCount = closedCount,
-                InProgressCount = activeCount,
-                AvgRepairTime = Math.Round(avgTime, 1)
-            });
-        }
-
-        stats.Performance = resultList
-            .OrderByDescending(x => x.ClosedCount)
-            .ToList();
+        // var specialists = await _context.Specialists
+        //     .AsNoTracking()
+        //     .ToListAsync(ct);
+        //
+        // var resultList = new List<SpecialistPerformanceDto>();
+        //
+        // foreach (var spec in specialists)
+        // {
+        //     var specRequests = _context.Requests
+        //         .AsNoTracking()
+        //         .Where(r => r.MasterId == spec.Id && r.ClosedAt >= start && r.ClosedAt <= end);
+        //     var closedCount = await specRequests
+        //         .CountAsync(ct);
+        //
+        //     var activeCount = await _context.Requests
+        //         .CountAsync(r => r.MasterId == spec.Id
+        //                          && r.Status != RequestStatus.Closed
+        //                          && r.Status != RequestStatus.Cancelled, ct);
+        //
+        //     double avgTime = 0;
+        //
+        //     if (closedCount > 0)
+        //     {
+        //         avgTime = await specRequests
+        //             .AverageAsync(r => EF.Functions.DateDiffHour(r.CreatedAt, r.ClosedAt.Value), ct);
+        //     }
+        //
+        //     resultList.Add(new SpecialistPerformanceDto
+        //     {
+        //         Name = spec.Name,
+        //         ClosedCount = closedCount,
+        //         InProgressCount = activeCount,
+        //         AvgRepairTime = Math.Round(avgTime, 1)
+        //     });
+        // }
+        //
+        // stats.Performance = resultList
+        //     .OrderByDescending(x => x.ClosedCount)
+        //     .ToList();
 
         return stats;
     }

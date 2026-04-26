@@ -28,30 +28,20 @@ public class CreateRequestCommandHandler : IRequestHandler<CreateRequestCommand,
 
     public async Task<Guid> Handle(CreateRequestCommand request, CancellationToken cancellationToken)
     {
-        Service? service = null;
-        if (request.ServiceId.HasValue)
-        {
-            service = await _serviceRepository.GetByIdAsync(request.ServiceId.Value, cancellationToken);
-            if (service == null)
-            {
-                throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена.");
-            }
-        }
-
-
         var domainRequest = Request.Create(
             clientId: request.ClientId,
+            type:request.Type,
             deviceTypeId: request.DeviceTypeId,
             deviceModelName: request.DeviceModelName,
             description: request.Description,
             contactName: request.ContactName,
-            contactPhone: request.ContactPhoneNumber,
+            contactPhone: request.ContactPhone,
             contactEmail: request.ContactEmail,
-            isCourier: request.IsCourierDelivery,
-            address: request.Address,
-            serialNumber: request.DeviceSerialNumber,
-            deviceModelId: request.DeviceModelId,
-            initialService: service
+            serialNumber: request.SerialNumber,
+            promoCodeId: request.PromoCodeId,
+            fieldAddress: request.FieldAddress,
+            scheduledTime: request.ScheduledTime,
+            parentRequestId: request.ParentRequestId
         );
         if (request.Photos != null && request.Photos.Count > 0)
         {
@@ -66,6 +56,19 @@ public class CreateRequestCommandHandler : IRequestHandler<CreateRequestCommand,
         }
 
         await _requestRepository.AddAsync(domainRequest, cancellationToken);
+        
+        if (request.ServiceIds.Any())
+        {
+            foreach (var serviceId in request.ServiceIds)
+            {
+                var service = await _serviceRepository.GetByIdAsync(serviceId, cancellationToken);
+                if (service != null)
+                {
+                    domainRequest.AddService(service.Id, service.Name, service.Price);
+                }
+            }
+        }
+        
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await _publisher.Publish(new RequestCreatedEvent(

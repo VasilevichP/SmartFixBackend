@@ -1,7 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SmartFix.Application.Features.Users.Commands.AuthorizeUser;
-using SmartFix.Application.Features.Users.Commands.RegisterClient;
+using SmartFix.Application.Features.Users.Commands.CreateManager;
+using SmartFix.Application.Features.Users.Commands.RegisterUser;
 
 namespace SmartFix.Api.Controllers;
 
@@ -28,5 +29,12 @@ public class AuthController : ControllerBase
     {
         var token = await _mediator.Send(command);
         return Ok(new { Token = token });
+    }
+    
+    [HttpPost("create_manager")]
+    public async Task<IActionResult> CreateManager(CreateManagerCommand command)
+    {
+        await _mediator.Send(command);
+        return Ok();
     }
 }

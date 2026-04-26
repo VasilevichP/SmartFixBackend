@@ -7,8 +7,8 @@ using SmartFix.Application.Features.Requests.Commands.ChangeDeviceInfo;
 using SmartFix.Application.Features.Requests.Commands.ChangeRequestStatus;
 using SmartFix.Application.Features.Requests.Commands.ChangeServicesList;
 using SmartFix.Application.Features.Requests.Commands.CreateRequest;
+using SmartFix.Application.Features.Requests.Commands.CreateRequestAsManager;
 using SmartFix.Application.Features.Requests.Commands.UpdateAcceptanceInfo;
-using SmartFix.Application.Features.Requests.Commands.UpdateDeliveryCost;
 using SmartFix.Application.Features.Requests.Commands.UpdateDiagnosticsResult;
 using SmartFix.Application.Features.Requests.Queries.GetAllRequestsForClient;
 using SmartFix.Application.Features.Requests.Queries.GetAllRequestsForManager;
@@ -27,7 +27,7 @@ public class RequestsController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpPost]
+    [HttpPost("create")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> Create([FromForm] CreateRequestCommand command)
     {
@@ -36,13 +36,21 @@ public class RequestsController : ControllerBase
         {
             return Unauthorized("Не удалось определить пользователя");
         }
-
+        
         command.ClientId = userId;
         var requestId = await _mediator.Send(command);
         return Created();
     }
 
-    [HttpGet("client_list")]
+    [HttpPost("createByManager")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> CreateByManager([FromBody] CreateRequestAsManagerCommand command)
+    {
+        var requestId = await _mediator.Send(command);
+        return Ok(requestId);
+    }
+    
+    [HttpGet("clientRequestsForClient")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> GetMyRequests()
     {
@@ -55,7 +63,15 @@ public class RequestsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("manager-list")]
+    [HttpGet("clientRequestsForManager")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> GetClientRequests([FromQuery] Guid clientId)
+    {
+        var result = await _mediator.Send(new GetClientRequestsQuery() { ClientId = clientId });
+        return Ok(result);
+    }
+    
+    [HttpGet("allRequestsForManager")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetAllRequests([FromQuery] GetAllRequestsQuery query)
     {
@@ -75,7 +91,7 @@ public class RequestsController : ControllerBase
 
     [HttpPatch("specialist")]
     [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> AssignSpecialist([FromBody] AssignSpecialistCommand command)
+    public async Task<IActionResult> AssignSpecialist([FromBody] AssignMasterCommand command)
     {
         await _mediator.Send(command);
         return NoContent();
@@ -97,7 +113,7 @@ public class RequestsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("add_service")]
+    [HttpPatch("addService")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> AddService([FromBody] AddServiceToRequestCommand command)
     {
@@ -105,7 +121,7 @@ public class RequestsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPatch("remove_service")]
+    [HttpPatch("removeService")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> RemoveService([FromBody] RemoveServiceFromRequestCommand command)
     {
@@ -124,14 +140,6 @@ public class RequestsController : ControllerBase
     [HttpPatch("acceptance")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> UpdateAcceptanceInfo([FromBody] UpdateAcceptanceInfoCommand command)
-    {
-        await _mediator.Send(command);
-        return NoContent();
-    }
-
-    [HttpPatch("delivery_cost")]
-    [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> UpdateDeliveryCost([FromBody] UpdateDeliveryCostCommand command)
     {
         await _mediator.Send(command);
         return NoContent();

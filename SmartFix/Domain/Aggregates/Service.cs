@@ -23,9 +23,6 @@ public class Service
     public Guid? DeviceModelId { get; private set; }
     public DeviceModel? DeviceModel { get; private set; }
 
-    private readonly List<Review> _reviews = new();
-    public IReadOnlyCollection<Review> Reviews => _reviews.AsReadOnly();
-
     private Service()
     {
     }

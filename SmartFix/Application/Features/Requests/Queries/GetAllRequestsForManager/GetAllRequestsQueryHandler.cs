@@ -18,7 +18,6 @@ public class GetAllRequestsQueryHandler: IRequestHandler<GetAllRequestsQuery, Li
         var requests = await _requestRepository.GetAllAsync(
             request.Client?.ToLower(),
             request.Device?.ToLower(),
-            request.Service?.ToLower(),
             request.Status,
             request.SortOrder,
             cancellationToken);
@@ -30,7 +29,7 @@ public class GetAllRequestsQueryHandler: IRequestHandler<GetAllRequestsQuery, Li
             DeviceModelName = r.DeviceModelName,
             CreatedAt = r.CreatedAt,
             Status = r.Status,
-            SpecialistName = r.Specialist?.Name ?? "Не назначен"
+            SpecialistName = r.Master?.Name ?? "Не назначен"
         }).ToList();
     }
 }

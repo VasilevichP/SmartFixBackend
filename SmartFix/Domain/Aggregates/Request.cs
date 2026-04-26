@@ -7,38 +7,44 @@ namespace SmartFix.Domain.Aggregates;
 public class Request
 {
     public Guid Id { get; private set; }
+    public RequestType Type { get; private set; }
     public RequestStatus Status { get; private set; }
+
     public string Description { get; private set; }
     public string? DiagnosticResult { get; private set; }
     public string? DeviceAppearance { get; private set; }
     public string? DevicePackage { get; private set; }
-    public decimal Price { get; private set; }
-
     public string? CancellationReason { get; private set; }
+    
+    public decimal BasePrice { get; private set; }
+    public decimal FinalPrice { get; private set; }
+
     public DateTime CreatedAt { get; private set; }
     public DateTime? ClosedAt { get; private set; }
 
     public string DeviceSerialNumber { get; private set; }
-
-    // --- ---
     public Guid DeviceTypeId { get; private set; }
     public DeviceType DeviceType { get; private set; }
     public Guid? DeviceModelId { get; private set; }
     public DeviceModel? DeviceModel { get; private set; }
     public string DeviceModelName { get; private set; }
-    public Guid? SpecialistId { get; private set; }
-    public Specialist? Specialist { get; private set; }
+
     public Guid ClientId { get; private set; }
-    public User Client { get; private set; }
+    public Client Client { get; private set; }
+    public Guid? MasterId { get; private set; }
+    public Master? Master { get; private set; }
+    
+    public Guid? PromoCodeId { get; private set; }
+    public PromoCode? PromoCode { get; private set; }
     public string ContactEmail { get; private set; }
-    public string ContactPhoneNumber { get; private set; }
     public string ContactName { get; private set; }
-    public bool IsCourierDelivery { get; private set; }
-    public string? DeliveryAddress { get; private set; }
+    public string ContactPhoneNumber { get; private set; }
 
-    public decimal DeliveryCost { get; private set; }
+    public string? FieldAddress { get; private set; }
+    public DateTime? ScheduledTime { get; private set; }
 
-    // --- ---
+    public Guid? ParentRequestId { get; private set; }
+
     private readonly List<RequestService> _services = new();
     public IReadOnlyCollection<RequestService> Services => _services.AsReadOnly();
 
@@ -48,42 +54,45 @@ public class Request
     private readonly List<StatusHistory> _statusHistories = new();
     public IReadOnlyCollection<StatusHistory> StatusHistories => _statusHistories.AsReadOnly();
 
+    private readonly List<RequestDiscount> _appliedDiscounts = new();
+    public IReadOnlyCollection<RequestDiscount> AppliedDiscounts => _appliedDiscounts.AsReadOnly();
+
     private Request()
     {
     }
 
-    public static Request Create(Guid clientId, Guid deviceTypeId, string deviceModelName,
-        string description, string contactName, string contactPhone, string contactEmail,
-        bool isCourier, string? address, string? serialNumber, Guid? deviceModelId = null,
-        Service? initialService = null)
+    public static Request Create(Guid clientId, RequestType type, Guid deviceTypeId, string deviceModelName,
+        string description, string contactName, string contactPhone, string contactEmail, string serialNumber, 
+        Guid? promoCodeId, string? fieldAddress = null, DateTime? scheduledTime = null, Guid? parentRequestId = null)
     {
-        if (isCourier && string.IsNullOrWhiteSpace(address))
-            throw new HttpException(HttpStatusCode.BadRequest, "Для курьерской доставки необходимо указать адрес.");
+        if (type == RequestType.Field && (string.IsNullOrWhiteSpace(fieldAddress) || !scheduledTime.HasValue))
+            throw new Exception("Для выездного ремонта необходимо указать адрес и время визита.");
+
+        if (type == RequestType.Warranty && !parentRequestId.HasValue)
+            throw new Exception("Для гарантийного ремонта необходимо указать родительскую заявку.");
 
         var request = new Request
         {
+            Id = Guid.NewGuid(),
+            Type = type,
             Status = RequestStatus.New,
             CreatedAt = DateTime.UtcNow,
 
             ClientId = clientId,
+            ContactEmail = contactEmail,
             ContactName = contactName,
             ContactPhoneNumber = contactPhone,
-            ContactEmail = contactEmail,
 
             DeviceTypeId = deviceTypeId,
-            DeviceModelId = deviceModelId,
             DeviceModelName = deviceModelName,
-            DeviceSerialNumber = serialNumber ?? string.Empty,
+            DeviceSerialNumber = serialNumber,
             Description = description,
 
-            IsCourierDelivery = isCourier,
-            DeliveryAddress = address,
-            DeliveryCost = 0
+            PromoCodeId = promoCodeId,
+            FieldAddress = fieldAddress,
+            ScheduledTime = scheduledTime,
+            ParentRequestId = parentRequestId
         };
-        if (initialService != null)
-        {
-            request.AddService(initialService);
-        }
 
         request.AddStatusHistory(RequestStatus.New);
         return request;
@@ -92,85 +101,42 @@ public class Request
     public void ChangeStatus(RequestStatus newStatus)
     {
         if (Status == newStatus) return;
-        
-        if (newStatus == RequestStatus.Accepted)
+
+        if (newStatus == RequestStatus.Accepted && Type == RequestType.InService)
         {
             if (string.IsNullOrWhiteSpace(DeviceAppearance) || string.IsNullOrWhiteSpace(DevicePackage))
-                throw new HttpException(HttpStatusCode.BadRequest,"Для приема заявки необходимо заполнить Акт приемки (внешний вид и комплектацию).");
+                throw new Exception(
+                    "Для приема устройства в сервис необходимо описать его внешний вид и комплектацию.");
         }
 
-        if (newStatus == RequestStatus.InProgress)
-        {
-            if (!SpecialistId.HasValue)
-                throw new HttpException(HttpStatusCode.BadRequest,"Нельзя начать работу без назначенного специалиста.");
-        }
-
-        // if (newStatus == RequestStatus.Ready || newStatus == RequestStatus.Closed)
-        // {
-        //     if (_services.Count == 0 && Price <= 0 && Status != RequestStatus.Cancelled)
-        //         throw new DomainException("Нельзя завершить заявку с нулевой стоимостью и без услуг (кроме отмены).");
-        // }
+        if (newStatus == RequestStatus.InProgress && !MasterId.HasValue)
+            throw new Exception("Нельзя начать ремонт без назначенного мастера.");
 
         Status = newStatus;
         AddStatusHistory(newStatus);
 
         if (newStatus == RequestStatus.Closed || newStatus == RequestStatus.Cancelled)
-        {
             ClosedAt = DateTime.UtcNow;
-        }
         else
-        {
             ClosedAt = null;
-        }
     }
-    
+
     public void Cancel(string reason)
     {
         EnsureActive();
-
-        if (string.IsNullOrWhiteSpace(reason))
-            throw new HttpException(HttpStatusCode.BadRequest,"Укажите причину отмены.");
+        if (string.IsNullOrWhiteSpace(reason)) throw new Exception("Укажите причину отмены.");
 
         CancellationReason = reason;
         ChangeStatus(RequestStatus.Cancelled);
     }
 
-    public void AddService(Service service)
+    public void AssignMaster(Guid masterId)
     {
         EnsureActive();
+        MasterId = masterId;
 
-        var requestService = RequestService.Create(Id, service);
-        _services.Add(requestService);
-
-        RecalculatePrice();
-    }
-    
-    public void AddService(string name, decimal price)
-    {
-        EnsureActive();
-
-        var requestService = RequestService.Create(Id, name, price);
-        _services.Add(requestService);
-
-        RecalculatePrice();
-    }
-
-    public void RemoveService(Guid serviceId)
-    {
-        EnsureActive();
-
-        var item = _services.FirstOrDefault(s => s.ServiceId == serviceId); // Или по Id записи
-        if (item != null)
-        {
-            _services.Remove(item);
-            RecalculatePrice();
-        }
-    }
-
-
-    private void AddStatusHistory(RequestStatus status)
-    {
-        _statusHistories.Add(StatusHistory.Create(this.Id, status));
+        if (Status == RequestStatus.New || Status == RequestStatus.Accepted)
+            ChangeStatus(RequestStatus.Diagnostics);
     }
 
     public void UpdateAcceptanceInfo(string appearance, string package)
@@ -178,6 +144,26 @@ public class Request
         EnsureActive();
         DeviceAppearance = appearance;
         DevicePackage = package;
+    }
+
+    public void SetDiagnosticResult(string result)
+    {
+        EnsureActive();
+        DiagnosticResult = result;
+    }
+
+    public void AddService(Guid? serviceId, string name, decimal price)
+    {
+        EnsureActive();
+        var requestService = RequestService.Create(Id, serviceId, name, price);
+        _services.Add(requestService);
+
+        if (Status == RequestStatus.Diagnostics || Status == RequestStatus.InProgress)
+        {
+            ChangeStatus(RequestStatus.Pending);
+        }
+
+        RecalculatePrice();
     }
 
     public void UpdateDeviceInfo(Guid deviceTypeId, Guid? deviceModelId, string deviceModelName, string serialNumber)
@@ -188,52 +174,62 @@ public class Request
         DeviceModelName = deviceModelName;
         DeviceSerialNumber = serialNumber;
     }
-
-    public void AssignSpecialist(Guid specialistId)
+    public void RemoveService(Guid requestServiceId)
     {
         EnsureActive();
-
-        SpecialistId = specialistId;
-        if (Status == RequestStatus.New)
+        var item = _services.FirstOrDefault(s => s.Id == requestServiceId);
+        if (item != null)
         {
-            ChangeStatus(RequestStatus.Diagnostics);
+            _services.Remove(item);
+            RecalculatePrice();
         }
     }
 
-    public void SetDeliveryCost(decimal cost)
+    public void ApplyDiscount(Guid? discountRuleId, string ruleName, decimal savedAmount)
     {
         EnsureActive();
-        if (!IsCourierDelivery && cost > 0)
-            throw new HttpException(HttpStatusCode.BadRequest,"Нельзя выставить счет за доставку для самовывоза.");
-        
-        DeliveryCost = cost;
+        _appliedDiscounts.Add(RequestDiscount.Create(this.Id, discountRuleId, ruleName, savedAmount));
         RecalculatePrice();
     }
-    
-    public void SetDiagnosticResult(string result)
+
+    public void ClearDiscounts()
     {
         EnsureActive();
-        DiagnosticResult = result;
+        _appliedDiscounts.Clear();
+        RecalculatePrice();
     }
 
-    public void AddPhoto(string fileName, string filePath)
+    private void RecalculatePrice()
     {
-        if (_photos.Count >= 5)
+        BasePrice = _services.Sum(s => s.Price);
+
+        if (Type == RequestType.Warranty)
         {
-            throw new HttpException(HttpStatusCode.BadRequest, "Нельзя добавить более 5 фотографий к одной заявке.");
+            FinalPrice = 0;
+            return;
         }
 
+        decimal totalDiscounts = _appliedDiscounts.Sum(d => d.SavedAmount);
+        FinalPrice = BasePrice - totalDiscounts;
+
+        if (FinalPrice < 0) FinalPrice = 0;
+    }
+    
+    public void AddPhoto(string fileName, string filePath)
+    {
+        if (_photos.Count >= 5) throw new HttpException(HttpStatusCode.BadRequest, "Максимум 5 фотографий.");
         _photos.Add(RequestPhoto.Create(this.Id, fileName, filePath));
     }
+
+    private void AddStatusHistory(RequestStatus status)
+    {
+        _statusHistories.Add(StatusHistory.Create(this.Id, status));
+    }
+
     private void EnsureActive()
     {
         if (Status == RequestStatus.Closed || Status == RequestStatus.Cancelled)
             throw new HttpException(HttpStatusCode.BadRequest,
                 "Редактирование закрытой или отмененной заявки запрещено.");
-    }
-
-    private void RecalculatePrice()
-    {
-        Price = _services.Sum(s => s.Price) + DeliveryCost;
     }
 }

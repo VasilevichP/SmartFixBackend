@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SmartFix.Application.Features.Requests.DTO;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
 using SmartFix.Domain.ValueObjects;
@@ -19,22 +20,25 @@ public class RequestRepository : IRequestRepository
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
+            .AsNoTracking()
             .Include(r => r.Services)
             .Include(r => r.Client)
+            .Include(r=>r.AppliedDiscounts)
             .Include(r => r.DeviceType)
-            .Include(r => r.Specialist)
+            .Include(r => r.Master)
             .Include(r => r.StatusHistories)
             .Include(r => r.Photos)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
-    public async Task<List<Request>> GetAllAsync(string? client,string? device,string? service, RequestStatus? status,
+    public async Task<List<Request>> GetAllAsync(string? client,string? device, RequestStatus? status,
         int sortOrder, CancellationToken cancellationToken = default)
     {
         var query = _context.Requests
+            .AsNoTracking()
             .Include(r => r.Client)
             .Include(r => r.Services)
-            .Include(r => r.Specialist)
+            .Include(r => r.Master)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(client))
@@ -67,7 +71,9 @@ public class RequestRepository : IRequestRepository
     public async Task<List<Request>> GetAllForClientAsync(Guid clientId, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
+            .AsNoTracking()
             .Include(r => r.Services)
+            .Include(r => r.AppliedDiscounts)
             .OrderByDescending(r => r.CreatedAt)
             .Where(r => r.ClientId == clientId)
             .OrderByDescending(r => r.CreatedAt)

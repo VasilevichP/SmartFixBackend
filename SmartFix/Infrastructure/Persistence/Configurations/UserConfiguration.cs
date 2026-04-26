@@ -16,12 +16,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.PasswordHash).IsRequired();
 
-        builder.Property(u => u.Role)
-            .HasConversion(
-                v => v.ToString(),
-                v => (Role)Enum.Parse(typeof(Role), v));
-
-        builder.Property(u => u.Name).HasMaxLength(150);
-        builder.Property(u => u.PhoneNumber).HasMaxLength(20);
+        builder.HasDiscriminator<Role>("Role")
+            .HasValue<Client>(Role.Client)
+            .HasValue<Manager>(Role.Manager)
+            .HasValue<Master>(Role.Master);
+        
     }
 }

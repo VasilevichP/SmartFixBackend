@@ -36,10 +36,7 @@ public class GetAllServicesForClientQueryHandler : IRequestHandler<GetAllService
             ManufacturerId = s.ManufacturerId,
             ManufacturerName = s.Manufacturer?.Name,
             DeviceModelId = s.DeviceModelId,
-            DeviceModelName = s.DeviceModel?.Name,
-            AverageRating = s.Reviews.Any() 
-                ? Math.Round(s.Reviews.Average(r => r.Rating), 1) 
-                : 0
+            DeviceModelName = s.DeviceModel?.Name
         }).ToList();
     }
 }
