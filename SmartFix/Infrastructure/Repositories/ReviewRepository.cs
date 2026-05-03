@@ -19,16 +19,14 @@ public class ReviewRepository: IReviewRepository
         await _context.Reviews.AddAsync(review, cancellationToken);
     }
 
-    public async Task<Review?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Review?> GetByRequestIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Reviews.FindAsync(new object[] { id }, cancellationToken);
+        return await _context.Reviews.FirstOrDefaultAsync(r=>r.RequestId == id, cancellationToken);
     }
 
-    public async Task<List<Review>> GetAllByServiceAsync(Guid serviceId, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsByRequest(Guid requestId, CancellationToken cancellationToken = default)
     {
-        return await _context.Reviews
-            .Where(r => r.RequestId == serviceId)
-            .ToListAsync(cancellationToken);
+        return await _context.Reviews.AnyAsync(x => x.RequestId == requestId, cancellationToken);
     }
 
     public void Delete(Review review)

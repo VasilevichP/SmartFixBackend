@@ -15,7 +15,7 @@ public class Request
     public string? DeviceAppearance { get; private set; }
     public string? DevicePackage { get; private set; }
     public string? CancellationReason { get; private set; }
-    
+
     public decimal BasePrice { get; private set; }
     public decimal FinalPrice { get; private set; }
 
@@ -33,8 +33,8 @@ public class Request
     public Client Client { get; private set; }
     public Guid? MasterId { get; private set; }
     public Master? Master { get; private set; }
-    
-    public Guid? PromoCodeId { get; private set; }
+
+    public Guid? PromoCodeId { get; set; }
     public PromoCode? PromoCode { get; private set; }
     public string ContactEmail { get; private set; }
     public string ContactName { get; private set; }
@@ -61,15 +61,18 @@ public class Request
     {
     }
 
-    public static Request Create(Guid clientId, RequestType type, Guid deviceTypeId, string deviceModelName,
-        string description, string contactName, string contactPhone, string contactEmail, string serialNumber, 
+    public static Request Create(Guid clientId, RequestType type, Guid deviceTypeId, Guid? deviceModelId,
+        string deviceModelName,
+        string description, string contactName, string contactPhone, string contactEmail, string serialNumber,
         Guid? promoCodeId, string? fieldAddress = null, DateTime? scheduledTime = null, Guid? parentRequestId = null)
     {
         if (type == RequestType.Field && (string.IsNullOrWhiteSpace(fieldAddress) || !scheduledTime.HasValue))
-            throw new Exception("Для выездного ремонта необходимо указать адрес и время визита.");
+            throw new HttpException(HttpStatusCode.BadRequest,
+                "Для выездного ремонта необходимо указать адрес и время визита");
 
         if (type == RequestType.Warranty && !parentRequestId.HasValue)
-            throw new Exception("Для гарантийного ремонта необходимо указать родительскую заявку.");
+            throw new HttpException(HttpStatusCode.BadRequest,
+                "Для гарантийного ремонта необходимо указать родительскую заявку");
 
         var request = new Request
         {
@@ -84,6 +87,7 @@ public class Request
             ContactPhoneNumber = contactPhone,
 
             DeviceTypeId = deviceTypeId,
+            DeviceModelId = deviceModelId,
             DeviceModelName = deviceModelName,
             DeviceSerialNumber = serialNumber,
             Description = description,
@@ -104,27 +108,40 @@ public class Request
 
         if (newStatus == RequestStatus.Accepted && Type == RequestType.InService)
         {
-            if (string.IsNullOrWhiteSpace(DeviceAppearance) || string.IsNullOrWhiteSpace(DevicePackage))
-                throw new Exception(
-                    "Для приема устройства в сервис необходимо описать его внешний вид и комплектацию.");
+            if (string.IsNullOrWhiteSpace(DeviceAppearance))
+                throw new HttpException(HttpStatusCode.BadRequest,
+                    "Для приема устройства в сервис необходимо описать его внешний вид");
         }
 
         if (newStatus == RequestStatus.InProgress && !MasterId.HasValue)
-            throw new Exception("Нельзя начать ремонт без назначенного мастера.");
+            throw new HttpException(HttpStatusCode.BadRequest, "Нельзя начать ремонт без назначенного мастера");
 
         Status = newStatus;
         AddStatusHistory(newStatus);
 
-        if (newStatus == RequestStatus.Closed || newStatus == RequestStatus.Cancelled)
+        if (newStatus == RequestStatus.Closed)
+        {
             ClosedAt = DateTime.UtcNow;
+            foreach (var service in _services)
+            {
+                service.StartWarranty(ClosedAt.Value);
+            }
+        }
+        else if (newStatus == RequestStatus.Cancelled)
+        {
+            ClosedAt = DateTime.UtcNow;
+        }
         else
+        {
             ClosedAt = null;
+        }
     }
 
     public void Cancel(string reason)
     {
         EnsureActive();
-        if (string.IsNullOrWhiteSpace(reason)) throw new Exception("Укажите причину отмены.");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new HttpException(HttpStatusCode.BadRequest, "Укажите причину отмены");
 
         CancellationReason = reason;
         ChangeStatus(RequestStatus.Cancelled);
@@ -152,10 +169,10 @@ public class Request
         DiagnosticResult = result;
     }
 
-    public void AddService(Guid? serviceId, string name, decimal price)
+    public void AddService(Guid? serviceId, string name, decimal price, int? warrantyPeriodMonths)
     {
         EnsureActive();
-        var requestService = RequestService.Create(Id, serviceId, name, price);
+        var requestService = RequestService.Create(Id, serviceId, name, price, warrantyPeriodMonths);
         _services.Add(requestService);
 
         if (Status == RequestStatus.Diagnostics || Status == RequestStatus.InProgress)
@@ -174,6 +191,24 @@ public class Request
         DeviceModelName = deviceModelName;
         DeviceSerialNumber = serialNumber;
     }
+
+    public void UpdateContactInfo(string contactName, string contactEmail, string contactPhone)
+    {
+        EnsureActive();
+        ContactEmail = contactEmail;
+        ContactName = contactName;
+        ContactPhoneNumber = contactPhone;
+    }
+
+    public void UpdateFieldRequestInfo(string address, DateTime time)
+    {
+        EnsureActive();
+        if (Type != RequestType.Field)
+            return;
+        FieldAddress = address;
+        ScheduledTime = time;
+    }
+
     public void RemoveService(Guid requestServiceId)
     {
         EnsureActive();
@@ -183,6 +218,20 @@ public class Request
             _services.Remove(item);
             RecalculatePrice();
         }
+    }
+
+    public void ReplaceServices(
+        IEnumerable<(Guid? serviceId, string name, decimal price, int? warrantyPeriodMonths)> newServices)
+    {
+        EnsureActive();
+        _services.Clear();
+        foreach (var s in newServices)
+        {
+            _services.Add(RequestService.Create(Id, s.serviceId, s.name, s.price, s.warrantyPeriodMonths));
+        }
+
+        ChangeStatus(RequestStatus.Pending);
+        RecalculatePrice();
     }
 
     public void ApplyDiscount(Guid? discountRuleId, string ruleName, decimal savedAmount)
@@ -214,10 +263,10 @@ public class Request
 
         if (FinalPrice < 0) FinalPrice = 0;
     }
-    
+
     public void AddPhoto(string fileName, string filePath)
     {
-        if (_photos.Count >= 5) throw new HttpException(HttpStatusCode.BadRequest, "Максимум 5 фотографий.");
+        if (_photos.Count >= 5) throw new HttpException(HttpStatusCode.BadRequest, "Максимум 5 фотографий");
         _photos.Add(RequestPhoto.Create(this.Id, fileName, filePath));
     }
 
@@ -230,6 +279,6 @@ public class Request
     {
         if (Status == RequestStatus.Closed || Status == RequestStatus.Cancelled)
             throw new HttpException(HttpStatusCode.BadRequest,
-                "Редактирование закрытой или отмененной заявки запрещено.");
+                "Редактирование закрытой или отмененной заявки запрещено");
     }
 }

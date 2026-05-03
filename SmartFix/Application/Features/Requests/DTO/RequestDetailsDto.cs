@@ -10,13 +10,16 @@ public class RequestDetailsDto
     public RequestStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
+    public string? CancellationReason { get; set; } = string.Empty;
 
     public Guid ClientId { get; set; }
     public string ContactName { get; set; } = string.Empty;
     public string ContactPhone { get; set; } = string.Empty;
     public string ContactEmail { get; set; } = string.Empty;
 
+    public Guid DeviceTypeId { get; set; }
     public string DeviceTypeName { get; set; } = string.Empty;
+    public Guid? DeviceModelId { get; set; }
     public string DeviceModelName { get; set; } = string.Empty;
     public string DeviceSerialNumber { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -34,6 +37,10 @@ public class RequestDetailsDto
 
     public Guid? MasterId { get; set; }
     public string? MasterName { get; set; }
+    
+    public bool HasReview { get; set; }
+    public int? ReviewRating { get; set; }
+    public string? ReviewComment { get; set; }
     public List<string> PhotoPaths { get; set; } = new();
     public List<RequestServiceDto> Services { get; set; } = new();
     public List<RequestDiscountDto> AppliedDiscounts { get; set; } = new();

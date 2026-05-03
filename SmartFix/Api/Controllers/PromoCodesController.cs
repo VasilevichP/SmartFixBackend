@@ -21,7 +21,7 @@ public class PromoCodesController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet("get_all")]
+    [HttpGet("getAll")]
     public async Task<IActionResult> GetAllPromoCodes()
     {
         var result = await _mediator.Send(new GetAllPromoCodesQuery());
@@ -49,7 +49,7 @@ public class PromoCodesController : ControllerBase
         return Created();
     }
 
-    [HttpPatch("change_status")]
+    [HttpPatch("changeStatus")]
     public async Task<IActionResult> ChangePromoCodeStatus([FromBody] ChangePromoCodeStatusCommand command)
     {
         await _mediator.Send(command);

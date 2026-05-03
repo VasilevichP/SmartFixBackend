@@ -15,7 +15,7 @@ public class RequestReadyEventHandler : INotificationHandler<RequestReadyEvent>
 
     public async Task Handle(RequestReadyEvent notification, CancellationToken cancellationToken)
     {
-        var subject = $"Заявка #{notification.RequestId.ToString().Substring(0, 8)} готова";
+        var subject = $"Заявка готова";
 
         var body = $@"
             <h2>Здравствуйте, {notification.ClientName}!</h2>

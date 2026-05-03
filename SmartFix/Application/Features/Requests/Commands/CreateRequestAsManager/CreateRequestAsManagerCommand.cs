@@ -13,11 +13,11 @@ public class CreateRequestAsManagerCommand: IRequest<Guid>
     public string ContactEmail { get; set; } = string.Empty;
     
     public RequestType Type { get; set; }
-    public Guid DeviceTypeId { get; set; }
+    public Guid? DeviceTypeId { get; set; }
     public Guid? DeviceModelId { get; set; }
-    public string DeviceModelName { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string SerialNumber { get; set; } = string.Empty;
+    public string? DeviceModelName { get; set; } = string.Empty;
+    public string? Description { get; set; } = string.Empty;
+    public string? SerialNumber { get; set; } = string.Empty;
     
     public string? DeviceAppearance { get; set; } = string.Empty;
     public string? DevicePackage { get; set; } = string.Empty;

@@ -1,6 +1,5 @@
 using System.Net;
 using MediatR;
-using SmartFix.Application.Features.Reviews.DTO;
 using SmartFix.Application.Features.Services.DTO;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Exceptions;

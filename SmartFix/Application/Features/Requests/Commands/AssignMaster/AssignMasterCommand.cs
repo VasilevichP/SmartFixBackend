@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace SmartFix.Application.Features.Requests.Commands.AssignSpecialist;
+namespace SmartFix.Application.Features.Requests.Commands.AssignMaster;
 
 public class AssignMasterCommand: IRequest
     

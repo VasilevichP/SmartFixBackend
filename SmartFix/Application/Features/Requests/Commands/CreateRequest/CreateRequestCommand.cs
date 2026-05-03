@@ -17,7 +17,7 @@ public class CreateRequestCommand : IRequest<Guid>
     public string ContactName { get; set; } = string.Empty;
     public string ContactPhone { get; set; } = string.Empty;
     public string SerialNumber { get; set; } = string.Empty;
-    public Guid? PromoCodeId { get; set; }
+    
     public string? PromoCodeCode { get; set; }
     public string? FieldAddress { get; set; }
     public DateTime? ScheduledTime { get; set; }

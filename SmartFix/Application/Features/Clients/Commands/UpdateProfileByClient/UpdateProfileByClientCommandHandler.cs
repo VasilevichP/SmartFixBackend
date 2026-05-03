@@ -1,5 +1,6 @@
 using System.Net;
 using MediatR;
+using SmartFix.Application.Features.Clients.Commands.UpdateProfileByClient;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Exceptions;
 

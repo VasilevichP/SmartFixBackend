@@ -2,7 +2,7 @@ namespace SmartFix.Domain.Aggregates;
 
 public class Master : User
 {
-    public string PhoneNumber { get; private set; }
+    public string? PhoneNumber { get; private set; }
     public bool IsDeleted { get; private set; }
 
     private Master()

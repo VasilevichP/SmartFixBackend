@@ -20,10 +20,9 @@ public class RequestRepository : IRequestRepository
     public async Task<Request?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Requests
-            .AsNoTracking()
             .Include(r => r.Services)
             .Include(r => r.Client)
-            .Include(r=>r.AppliedDiscounts)
+            .Include(r => r.AppliedDiscounts)
             .Include(r => r.DeviceType)
             .Include(r => r.Master)
             .Include(r => r.StatusHistories)
@@ -31,25 +30,24 @@ public class RequestRepository : IRequestRepository
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
-    public async Task<List<Request>> GetAllAsync(string? client,string? device, RequestStatus? status,
+    public async Task<List<Request>> GetAllAsync(string? client, string? device, RequestStatus? status,
         int sortOrder, CancellationToken cancellationToken = default)
     {
         var query = _context.Requests
             .AsNoTracking()
-            .Include(r => r.Client)
-            .Include(r => r.Services)
             .Include(r => r.Master)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(client))
         {
-            query = query.Where(r => 
-                r.Client.Name.ToLower().Contains(client)
+            query = query.Where(r =>
+                r.ContactName.ToLower().Contains(client)
             );
         }
+
         if (!string.IsNullOrWhiteSpace(device))
         {
-            query = query.Where(r => 
+            query = query.Where(r =>
                 r.DeviceModelName.ToLower().Contains(device)
             );
         }
@@ -61,8 +59,8 @@ public class RequestRepository : IRequestRepository
 
         query = sortOrder switch
         {
-            1 => query.OrderBy(r => r.CreatedAt),           
-            _ => query.OrderByDescending(r => r.CreatedAt), 
+            1 => query.OrderBy(r => r.CreatedAt),
+            _ => query.OrderByDescending(r => r.CreatedAt),
         };
 
         return await query.ToListAsync(cancellationToken);
@@ -78,6 +76,59 @@ public class RequestRepository : IRequestRepository
             .Where(r => r.ClientId == clientId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Request>> GetAllForMasterAsync(Guid masterId, string? client, string? device,
+        RequestStatus? status, int sortOrder,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Requests
+            .AsNoTracking()
+            .Include(r => r.Master)
+            .Where(r => r.MasterId == masterId)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(client))
+        {
+            query = query.Where(r =>
+                r.ContactName.ToLower().Contains(client)
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(device))
+        {
+            query = query.Where(r =>
+                r.DeviceModelName.ToLower().Contains(device)
+            );
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        query = sortOrder switch
+        {
+            1 => query.OrderBy(r => r.CreatedAt),
+            _ => query.OrderByDescending(r => r.CreatedAt),
+        };
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<RequestForSelectDto>> GetClosedForClient(Guid clientId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Requests
+            .AsNoTracking()
+            .Where(r => r.ClientId == clientId && r.Status == RequestStatus.Closed)
+            .OrderByDescending(r => r.ClosedAt)
+            .Select(r => new RequestForSelectDto
+            {
+                Id = r.Id,
+                DeviceModelName = r.DeviceModelName,
+                ClosedAt = r.ClosedAt
+            }).ToListAsync(cancellationToken);
     }
 
     public void Update(Request request)

@@ -6,7 +6,7 @@ namespace SmartFix.Application.Helpers;
 public static class DiscountCalculator
 {
     public static void CalculateAndApplyDiscounts(Request request, List<Discount> allActiveRules, int clientTotalOrders,
-        decimal personalDiscountPercent)
+        decimal personalDiscountPercent, PromoCode? appliedPromoCode = null)
     {
         request.ClearDiscounts();
 
@@ -55,6 +55,23 @@ public static class DiscountCalculator
             
             request.ApplyDiscount(null, $"Персональная скидка клиента ({personalDiscountPercent}%)", personalSaved);
         }
+        if (appliedPromoCode != null && currentBalance > 0)
+        {
+            decimal promoSaved = 0;
+            if (appliedPromoCode.Type == DiscountType.Percent)
+            {
+                promoSaved = currentBalance * (appliedPromoCode.Value / 100m);
+            }
+            else if (appliedPromoCode.Type == DiscountType.FixedAmount)
+            {
+                promoSaved = appliedPromoCode.Value;
+            }
+
+            if (promoSaved > currentBalance) promoSaved = currentBalance;
+            currentBalance -= promoSaved;
+
+            request.ApplyDiscount(null, $"Промокод '{appliedPromoCode.Code}'", promoSaved);
+        }
     }
 
     private static int GetDiscountTypeSortOrder(Discount rule)
@@ -66,5 +83,21 @@ public static class DiscountCalculator
             DayOfWeekDiscount => 3,
             _ => 4
         };
+    }
+
+    public static void ApplyPromoCode(Request request, PromoCode promoCode)
+    {
+        decimal savedAmount = 0;
+        if (promoCode.Type == DiscountType.Percent)
+        {
+            savedAmount = request.FinalPrice * (promoCode.Value / 100m);
+        }
+        else if (promoCode.Type == DiscountType.FixedAmount)
+        {
+            savedAmount = promoCode.Value;
+        }
+
+        if (savedAmount > request.FinalPrice) savedAmount = request.FinalPrice;
+        request.ApplyDiscount(null, $"Промокод '{promoCode.Code}'", savedAmount);
     }
 }

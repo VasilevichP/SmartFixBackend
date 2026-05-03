@@ -8,7 +8,9 @@ public class RequestDiscountConfiguration : IEntityTypeConfiguration<RequestDisc
 {
     public void Configure(EntityTypeBuilder<RequestDiscount> builder)
     {
-        builder.HasKey(rd => rd.Id);
+        builder.HasKey(rd => rd.Id); 
+        builder.Property(r => r.Id)
+            .ValueGeneratedNever();
         builder.Property(rd => rd.SavedAmount).HasColumnType("decimal(18,2)");
         builder.HasOne(rd => rd.Discount)
             .WithMany()
@@ -17,6 +19,6 @@ public class RequestDiscountConfiguration : IEntityTypeConfiguration<RequestDisc
         builder.HasOne(rd=>rd.Request)
             .WithMany(r => r.AppliedDiscounts)
             .HasForeignKey(rd => rd.RequestId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -19,7 +19,7 @@ public class DiscountsController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet("get_all")]
+    [HttpGet("getAll")]
     public async Task<IActionResult> GetAllDiscounts()
     {
         var result = await _mediator.Send(new GetAllDiscountsQuery());
@@ -47,7 +47,7 @@ public class DiscountsController : ControllerBase
         return NoContent();
     }
     
-    [HttpPatch("change_status")]
+    [HttpPatch("changeStatus")]
     public async Task<IActionResult> ChangeDiscountStatus([FromBody] ChangeDiscountStatusCommand command)
     {
         await _mediator.Send(command);

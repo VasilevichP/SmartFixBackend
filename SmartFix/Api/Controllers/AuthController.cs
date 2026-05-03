@@ -31,7 +31,7 @@ public class AuthController : ControllerBase
         return Ok(new { Token = token });
     }
     
-    [HttpPost("create_manager")]
+    [HttpPost("createManager")]
     public async Task<IActionResult> CreateManager(CreateManagerCommand command)
     {
         await _mediator.Send(command);

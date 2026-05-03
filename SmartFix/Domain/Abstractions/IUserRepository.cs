@@ -1,3 +1,5 @@
+using SmartFix.Application.Features.Masters.DTO;
+using SmartFix.Application.Features.Masters.Queries.GetAllMastersForSelect;
 using SmartFix.Domain.Aggregates;
 using SmartFix.Domain.ValueObjects;
 
@@ -24,6 +26,7 @@ public interface IUserRepository
         string? phoneSearch,
         CancellationToken cancellationToken = default);
     
+    Task<List<MasterSelectDto>> GetAllMastersForSelect(CancellationToken cancellationToken);
     Task<int> CountMasterActiveRequestsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<int> GetClientOrdersCountAsync(Guid clientId, CancellationToken ct);
 }

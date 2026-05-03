@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 
-namespace SmartFix.Application.Features.Users.Commands.UpdateProfileByClient;
+namespace SmartFix.Application.Features.Clients.Commands.UpdateProfileByClient;
 
 public class UpdateProfileByClientCommand : IRequest
 {

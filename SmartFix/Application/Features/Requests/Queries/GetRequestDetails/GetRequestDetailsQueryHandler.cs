@@ -9,10 +9,12 @@ namespace SmartFix.Application.Features.Requests.Queries.GetRequestDetails;
 public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQuery, RequestDetailsDto>
 {
     private readonly IRequestRepository _requestRepository;
+    private readonly IReviewRepository _reviewRepository;
 
-    public GetRequestDetailsQueryHandler(IRequestRepository requestRepository)
+    public GetRequestDetailsQueryHandler(IRequestRepository requestRepository, IReviewRepository reviewRepository)
     {
         _requestRepository = requestRepository;
+        _reviewRepository = reviewRepository;
     }
 
     public async Task<RequestDetailsDto> Handle(GetRequestDetailsQuery request, CancellationToken cancellationToken)
@@ -20,6 +22,7 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
         var requestEntity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
 
         if (requestEntity == null) throw new HttpException(HttpStatusCode.NotFound, "Заявка не найдена");
+        var review = await _reviewRepository.GetByRequestIdAsync(requestEntity.Id, cancellationToken);
 
         return new RequestDetailsDto
         {
@@ -28,13 +31,16 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
             Status = requestEntity.Status,
             CreatedAt = requestEntity.CreatedAt,
             ClosedAt = requestEntity.ClosedAt,
+            CancellationReason = requestEntity.CancellationReason,
             
             ClientId = requestEntity.ClientId,
             ContactName = requestEntity.ContactName,
             ContactPhone = requestEntity.ContactPhoneNumber,
             ContactEmail = requestEntity.ContactEmail,
             
+            DeviceTypeId = requestEntity.DeviceTypeId,
             DeviceTypeName = requestEntity.DeviceType?.Name ?? "Неизвестно",
+            DeviceModelId = requestEntity.DeviceModelId,
             DeviceModelName = requestEntity.DeviceModelName,
             DeviceSerialNumber = requestEntity.DeviceSerialNumber,
             Description = requestEntity.Description,
@@ -52,6 +58,10 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
             
             MasterId = requestEntity.MasterId,
             MasterName = requestEntity.Master?.Name,
+            
+            HasReview = review != null,
+            ReviewRating = review?.Rating,
+            ReviewComment = review?.Comment,
            
             Services = requestEntity.Services.Select(s => new RequestServiceDto
             {

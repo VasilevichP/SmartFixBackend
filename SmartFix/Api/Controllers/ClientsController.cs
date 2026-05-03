@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFix.Application.Features.Clients.Commands.CreateProfileByManager;
+using SmartFix.Application.Features.Clients.Commands.UpdateProfileByClient;
 using SmartFix.Application.Features.Clients.Commands.UpdateProfileByManager;
 using SmartFix.Application.Features.Clients.Queries.GetAllClients;
 using SmartFix.Application.Features.Clients.Queries.GetProfile;
@@ -22,6 +23,19 @@ public class ClientsController : ControllerBase
         _mediator = mediator;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetClientProfileByToken()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Не удалось определить пользователя");
+        }
+
+        var profile = await _mediator.Send(new GetClientProfileQuery { UserId = Guid.Parse(userIdString) });
+        return Ok(profile);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetClientProfile(Guid id)
     {
@@ -29,14 +43,21 @@ public class ClientsController : ControllerBase
         return Ok(profile);
     }
 
-    [HttpPut]
+    [HttpPut("updateByClient")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> UpdateProfileByClient([FromBody] UpdateProfileByClientCommand command)
     {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Не удалось определить пользователя");
+        }
+
+        command.Id = Guid.Parse(userIdString);
         await _mediator.Send(command);
         return Ok();
     }
-    
+
     [HttpGet("getAll")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetClientList([FromQuery] GetAllClientsQuery query)
@@ -44,7 +65,7 @@ public class ClientsController : ControllerBase
         var profile = await _mediator.Send(query);
         return Ok(profile);
     }
-    
+
     [HttpPost("create")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> CreateProfileByManager([FromBody] CreateProfileByManagerCommand command)
@@ -52,8 +73,8 @@ public class ClientsController : ControllerBase
         await _mediator.Send(command);
         return Ok();
     }
-    
-    [HttpPut("update")]
+
+    [HttpPut("updateByManager")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> UpdateProfileByManager([FromBody] UpdateProfileByManagerCommand command)
     {

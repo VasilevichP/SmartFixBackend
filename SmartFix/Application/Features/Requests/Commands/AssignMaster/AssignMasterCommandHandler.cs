@@ -1,6 +1,6 @@
 using System.Net;
 using MediatR;
-using SmartFix.Application.Features.Requests.Commands.AssignSpecialist;
+using SmartFix.Application.Features.Requests.Commands.AssignMaster;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Exceptions;
 using SmartFix.Domain.ValueObjects;

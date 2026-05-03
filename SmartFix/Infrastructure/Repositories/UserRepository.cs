@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SmartFix.Application.Features.Masters.DTO;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Aggregates;
 using SmartFix.Domain.ValueObjects;
@@ -88,7 +89,7 @@ public class UserRepository : IUserRepository
     public async Task<List<Master>> GetMasterListAsync(string? nameSearch, string? phoneSearch,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Masters.AsQueryable().Where(m=>!m.IsDeleted);
+        var query = _context.Masters.AsQueryable().Where(m => !m.IsDeleted);
 
         if (!string.IsNullOrWhiteSpace(nameSearch))
         {
@@ -105,6 +106,22 @@ public class UserRepository : IUserRepository
         }
 
         return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<MasterSelectDto>> GetAllMastersForSelect(CancellationToken cancellationToken)
+    {
+        var masters = await _context.Masters
+            .AsNoTracking()
+            .Where(m => !m.IsDeleted)
+            .ToListAsync(cancellationToken);
+        var dtos = new List<MasterSelectDto>();
+        foreach (var master in masters)
+        {
+            var requests = await CountMasterActiveRequestsAsync(master.Id, cancellationToken);
+            dtos.Add(new MasterSelectDto{Id = master.Id, Name = master.Name, ActiveRequestsCount = requests});
+        }
+
+        return dtos;
     }
 
     public async Task<int> CountMasterActiveRequestsAsync(Guid id, CancellationToken cancellationToken = default)

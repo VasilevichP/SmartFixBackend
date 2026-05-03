@@ -8,7 +8,6 @@ public class Review
     public Guid Id { get; private set; }
     public int Rating { get; private set; }
     public string? Comment { get; private set; }
-    public DateTime CreatedAt { get; private set; }
     
     public Guid RequestId { get; private set; }
     public Request Request { get; private set; } 
@@ -18,7 +17,7 @@ public class Review
 
     private Review() { }
 
-    public static Review Create(Guid requestId, Guid clientId, int rating, string comment)
+    public static Review Create(Guid requestId, Guid clientId, int rating, string? comment)
     {
         if (rating < 1 || rating > 5)
             throw new HttpException(HttpStatusCode.BadRequest,"Рейтинг должен быть от 1 до 5.");
@@ -29,7 +28,6 @@ public class Review
             ClientId = clientId,
             Rating = rating,
             Comment = comment,
-            CreatedAt = DateTime.UtcNow
         };
     }
 }

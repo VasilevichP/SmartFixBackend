@@ -16,4 +16,12 @@ public interface IRequestRepository
         int sortOrder,
         CancellationToken cancellationToken = default);
     Task<List<Request>> GetAllForClientAsync(Guid clientId, CancellationToken cancellationToken = default);
+    Task<List<Request>> GetAllForMasterAsync(
+        Guid masterId,
+        string? client,
+        string? device,
+        RequestStatus? status,
+        int sortOrder,
+        CancellationToken cancellationToken = default);
+    Task<List<RequestForSelectDto>> GetClosedForClient(Guid clientId, CancellationToken cancellationToken = default);
 }

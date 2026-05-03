@@ -15,7 +15,7 @@ public class RequestCreatedEventHandler : INotificationHandler<RequestCreatedEve
 
     public async Task Handle(RequestCreatedEvent notification, CancellationToken cancellationToken)
     {
-        var subject = $"Заявка #{notification.RequestId.ToString().Substring(0, 8)} принята";
+        var subject = $"Заявка принята";
         
         var body = $@"
             <h2>Здравствуйте, {notification.ClientName}!</h2>

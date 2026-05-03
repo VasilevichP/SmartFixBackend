@@ -23,7 +23,7 @@ public class ServicesController : ControllerBase
         _mediator = mediator;
     }
 
-    [HttpGet("client-list")]
+    [HttpGet("clientList")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> GetClientServices([FromQuery] GetAllServicesForClientQuery filterParams)
     {
@@ -31,7 +31,7 @@ public class ServicesController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("manager-list")]
+    [HttpGet("managerList")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetManagerServices([FromQuery] GetAllServicesForManagerQuery filterParams)
     {
@@ -39,8 +39,8 @@ public class ServicesController : ControllerBase
         return Ok(result);
     }
         
-    [HttpGet("request-list")]
-    [Authorize(Roles = "Manager")]
+    [HttpGet("requestList")]
+    [Authorize(Roles = "Manager, Master")]
     public async Task<IActionResult> GetServicesForRequest()
     {
         var result = await _mediator.Send(new GetAllServicesForRequestQuery());
