@@ -23,7 +23,7 @@ public class JwtProvider: IJwtProvider
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
-            new(ClaimTypes.Role, user.Role.ToString())
+            new(ClaimTypes.Role, user.GetType().Name)
         };
 
         var key = new SymmetricSecurityKey(

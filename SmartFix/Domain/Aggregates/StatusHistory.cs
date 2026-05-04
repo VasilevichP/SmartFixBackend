@@ -8,6 +8,7 @@ public class StatusHistory
     public RequestStatus Status { get; private set; }
     public DateTime Timestamp { get; private set; }
     public Guid RequestId { get; private set; }
+    public Request Request { get; private set; }
 
     private StatusHistory() { }
 

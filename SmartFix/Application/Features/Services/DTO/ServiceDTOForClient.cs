@@ -15,5 +15,4 @@ public class ServiceDTOForClient
     
     public Guid? ManufacturerId { get; set; }
     public string? ManufacturerName { get; set; }
-    public double AverageRating { get; set; }
 }

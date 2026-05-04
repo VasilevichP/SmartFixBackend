@@ -1,5 +1,3 @@
-using SmartFix.Application.Features.Reviews.DTO;
-
 namespace SmartFix.Application.Features.Services.DTO;
 
 public class ServiceDTO

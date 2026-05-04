@@ -1,3 +1,4 @@
+using SmartFix.Application.Features.Requests.DTO;
 using SmartFix.Domain.Aggregates;
 using SmartFix.Domain.ValueObjects;
 
@@ -11,9 +12,16 @@ public interface IRequestRepository
     Task<List<Request>> GetAllAsync(
         string? client,
         string? device,
-        string? service,
         RequestStatus? status,
         int sortOrder,
         CancellationToken cancellationToken = default);
     Task<List<Request>> GetAllForClientAsync(Guid clientId, CancellationToken cancellationToken = default);
+    Task<List<Request>> GetAllForMasterAsync(
+        Guid masterId,
+        string? client,
+        string? device,
+        RequestStatus? status,
+        int sortOrder,
+        CancellationToken cancellationToken = default);
+    Task<List<RequestForSelectDto>> GetClosedForClient(Guid clientId, CancellationToken cancellationToken = default);
 }

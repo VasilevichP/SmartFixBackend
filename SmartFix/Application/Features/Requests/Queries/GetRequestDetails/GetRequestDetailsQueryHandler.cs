@@ -9,10 +9,12 @@ namespace SmartFix.Application.Features.Requests.Queries.GetRequestDetails;
 public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQuery, RequestDetailsDto>
 {
     private readonly IRequestRepository _requestRepository;
+    private readonly IReviewRepository _reviewRepository;
 
-    public GetRequestDetailsQueryHandler(IRequestRepository requestRepository)
+    public GetRequestDetailsQueryHandler(IRequestRepository requestRepository, IReviewRepository reviewRepository)
     {
         _requestRepository = requestRepository;
+        _reviewRepository = reviewRepository;
     }
 
     public async Task<RequestDetailsDto> Handle(GetRequestDetailsQuery request, CancellationToken cancellationToken)
@@ -20,41 +22,70 @@ public class GetRequestDetailsQueryHandler : IRequestHandler<GetRequestDetailsQu
         var requestEntity = await _requestRepository.GetByIdAsync(request.RequestId, cancellationToken);
 
         if (requestEntity == null) throw new HttpException(HttpStatusCode.NotFound, "Заявка не найдена");
+        var review = await _reviewRepository.GetByRequestIdAsync(requestEntity.Id, cancellationToken);
 
         return new RequestDetailsDto
         {
             Id = requestEntity.Id,
+            Type = requestEntity.Type,
             Status = requestEntity.Status,
-
-            DeviceType = requestEntity.DeviceType?.Name ?? "Неизвестно",
-            DeviceModel = requestEntity.DeviceModelName,
-            DeviceSerialNumber = requestEntity.DeviceSerialNumber,
-            Description = requestEntity.Description,
-
-            ServiceName = requestEntity.Service?.Name,
-            Price = requestEntity.Price,
-            WarrantyPeriod = requestEntity.Service?.WarrantyPeriod,
-
             CreatedAt = requestEntity.CreatedAt,
             ClosedAt = requestEntity.ClosedAt,
-
+            CancellationReason = requestEntity.CancellationReason,
+            
             ClientId = requestEntity.ClientId,
-            ClientEmail = requestEntity.ContactEmail,
-            ClientName = requestEntity.ContactName,
-            ClientPhone = requestEntity.ContactPhoneNumber,
+            ContactName = requestEntity.ContactName,
+            ContactPhone = requestEntity.ContactPhoneNumber,
+            ContactEmail = requestEntity.ContactEmail,
+            
+            DeviceTypeId = requestEntity.DeviceTypeId,
+            DeviceTypeName = requestEntity.DeviceType?.Name ?? "Неизвестно",
+            DeviceModelId = requestEntity.DeviceModelId,
+            DeviceModelName = requestEntity.DeviceModelName,
+            DeviceSerialNumber = requestEntity.DeviceSerialNumber,
+            Description = requestEntity.Description,
+            
+            DiagnosticResult = requestEntity.DiagnosticResult,
+            DeviceAppearance = requestEntity.DeviceAppearance,
+            DevicePackage = requestEntity.DevicePackage,
+            
+            FieldAddress = requestEntity.FieldAddress,
+            ScheduledTime = requestEntity.ScheduledTime,
+            ParentRequestId = requestEntity.ParentRequestId,
+            
+            BasePrice = requestEntity.BasePrice,
+            FinalPrice = requestEntity.FinalPrice,
+            
+            MasterId = requestEntity.MasterId,
+            MasterName = requestEntity.Master?.Name,
+            
+            HasReview = review != null,
+            ReviewRating = review?.Rating,
+            ReviewComment = review?.Comment,
+           
+            Services = requestEntity.Services.Select(s => new RequestServiceDto
+            {
+                Id = s.Id,
+                ServiceId = s.ServiceId,
+                ServiceName = s.ServiceName,
+                Price = s.Price
+            }).ToList(),
 
-            SpecialistId = requestEntity.SpecialistId,
-            SpecialistName = requestEntity.Specialist?.Name,
+            AppliedDiscounts = requestEntity.AppliedDiscounts.Select(d => new RequestDiscountDto
+            {
+                Id = d.Id,
+                Name = d.RuleName,
+                SavedAmount = d.SavedAmount
+            }).ToList(),
 
-            PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList(),
-
-            History = requestEntity.StatusHistories
-                .OrderByDescending(h => h.Timestamp)
-                .Select(h => new StatusHistoryDto
+            StatusHistories = requestEntity.StatusHistories
+                .OrderBy(sh => sh.Timestamp)
+                .Select(sh => new StatusHistoryDto
                 {
-                    Status = h.Status,
-                    Date = h.Timestamp
-                }).ToList()
+                    Status = sh.Status,
+                    Date = sh.Timestamp
+                }).ToList(),
+            PhotoPaths = requestEntity.Photos.Select(p => p.FilePath).ToList()
         };
     }
 }

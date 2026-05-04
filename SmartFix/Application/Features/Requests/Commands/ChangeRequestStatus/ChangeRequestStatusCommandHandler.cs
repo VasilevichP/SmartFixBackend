@@ -10,7 +10,6 @@ namespace SmartFix.Application.Features.Requests.Commands.ChangeRequestStatus;
 
 public class ChangeRequestStatusCommandHandler: IRequestHandler<ChangeRequestStatusCommand>
 {
-    
     private readonly IPublisher _publisher; 
     private readonly IRequestRepository _requestRepository;
     private readonly IUnitOfWork _unitOfWork;

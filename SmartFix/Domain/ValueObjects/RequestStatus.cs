@@ -2,10 +2,12 @@ namespace SmartFix.Domain.ValueObjects;
 
 public enum RequestStatus
 {
-    New = 0,          
-    Diagnostics = 1, 
-    InProgress = 2,  
-    Ready = 3,        
-    Closed = 4,     
-    Cancelled = 5 
+    New = 0, 
+    Accepted = 1,
+    Diagnostics = 2, 
+    InProgress = 3,  
+    Pending = 4,
+    Ready = 5,        
+    Closed = 6,     
+    Cancelled = 7 
 }

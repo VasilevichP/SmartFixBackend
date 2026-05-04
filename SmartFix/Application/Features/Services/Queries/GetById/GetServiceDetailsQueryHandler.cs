@@ -1,6 +1,5 @@
 using System.Net;
 using MediatR;
-using SmartFix.Application.Features.Reviews.DTO;
 using SmartFix.Application.Features.Services.DTO;
 using SmartFix.Domain.Abstractions;
 using SmartFix.Domain.Exceptions;
@@ -23,12 +22,6 @@ public class GetServiceDetailsQueryHandler : IRequestHandler<GetServiceDetailsQu
         if (service == null)
             throw new HttpException(HttpStatusCode.NotFound, "Услуга не найдена");
 
-        double avgRating = 0;
-        if (service.Reviews.Any())
-        {
-            avgRating = service.Reviews.Average(r => r.Rating);
-        }
-
         return new ServiceDetailsDto
         {
             Id = service.Id,
@@ -45,18 +38,6 @@ public class GetServiceDetailsQueryHandler : IRequestHandler<GetServiceDetailsQu
             ManufacturerId = service.ManufacturerId,
             ManufacturerName = service.Manufacturer?.Name,
             IsAvailable = service.IsAvailable,
-
-            ReviewsCount = service.Reviews.Count,
-            AverageRating = Math.Round(avgRating, 1),
-
-            Reviews = service.Reviews.OrderByDescending(r => r.CreatedAt).Select(r => new ReviewDto
-            {
-                Id = r.Id,
-                Rating = r.Rating,
-                Comment = r.Comment,
-                CreatedAt = r.CreatedAt,
-                ClientName = r.Client.Name
-            }).ToList()
         };
     }
 }

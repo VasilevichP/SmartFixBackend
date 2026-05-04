@@ -20,7 +20,7 @@ public class GetClientRequestsQueryHandler : IRequestHandler<GetClientRequestsQu
         return requests.Select(r => new RequestsBriefDto
         {
             Id = r.Id,
-            ServiceName = r.Service?.Name,
+            DeviceModelName = r.DeviceModelName,
             CreatedAt = r.CreatedAt,
             Status = r.Status
         }).ToList();

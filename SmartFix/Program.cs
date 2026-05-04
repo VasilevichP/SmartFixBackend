@@ -32,12 +32,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
-builder.Services.AddScoped<ISpecialistRepository, SpecialistRepository>();
 builder.Services.AddScoped<IDeviceTypeRepository, DeviceTypeRepository>();
 builder.Services.AddScoped<IManufacturerRepository, ManufacturerRepository>();
 builder.Services.AddScoped<IDeviceModelRepository, DeviceModelRepository>();
 builder.Services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IDiscountRepository, DiscountRepository>();
+builder.Services.AddScoped<IPromoCodeRepository, PromoCodeRepository>();
+builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
@@ -104,7 +106,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173")
+                .WithOrigins("http://localhost:5173","http://localhost:5174")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
