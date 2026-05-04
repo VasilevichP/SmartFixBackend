@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartFix.Application.Features.Documents.Queries.GetRequestDocuments;
 using SmartFix.Application.Features.Requests.Commands.ApproveRequest;
 using SmartFix.Application.Features.Requests.Commands.AssignMaster;
 using SmartFix.Application.Features.Requests.Commands.ChangeContactInfo;
@@ -20,6 +21,7 @@ using SmartFix.Application.Features.Requests.Queries.GetAllRequestsForManager;
 using SmartFix.Application.Features.Requests.Queries.GetAllRequestsForMaster;
 using SmartFix.Application.Features.Requests.Queries.GetClosedRequestsForClient;
 using SmartFix.Application.Features.Requests.Queries.GetRequestDetails;
+using SmartFix.Domain.ValueObjects;
 
 namespace SmartFix.Api.Controllers;
 
@@ -78,11 +80,11 @@ public class RequestsController : ControllerBase
         if (!Guid.TryParse(userIdString, out var userId))
             return Unauthorized("Не удалось определить пользователя");
         query.MasterId = userId;
-        
+
         var result = await _mediator.Send(query);
         return Ok(result);
     }
-    
+
     [HttpGet("clientRequestsForManager")]
     [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetClientRequests([FromQuery] Guid clientId)
@@ -90,7 +92,7 @@ public class RequestsController : ControllerBase
         var result = await _mediator.Send(new GetClientRequestsQuery() { ClientId = clientId });
         return Ok(result);
     }
-    
+
     [HttpGet("closedClientRequests")]
     [Authorize(Roles = "Manager,Client")]
     public async Task<IActionResult> GetClosedClientRequests([FromQuery] Guid clientId)
@@ -138,7 +140,7 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPatch("services")]
     [Authorize(Roles = "Manager,Master")]
     public async Task<IActionResult> UpdateServices([FromBody] UpdateRequestServicesListCommand command)
@@ -154,7 +156,7 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPatch("fieldRequestInfo")]
     [Authorize(Roles = "Manager,Master")]
     public async Task<IActionResult> ChangeFieldRequestInfo([FromBody] ChangeFieldRequestInfoCommand command)
@@ -162,7 +164,7 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPatch("deviceInfo")]
     [Authorize(Roles = "Manager,Master")]
     public async Task<IActionResult> ChangeDeviceInfo([FromBody] ChangeDeviceInfoCommand command)
@@ -186,7 +188,7 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPost("leaveReview")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> LeaveReview([FromBody] LeaveReviewCommand command)
@@ -201,7 +203,7 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPatch("approve")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> ApproveRequest([FromBody] ApproveRequestCommand command)
@@ -209,12 +211,39 @@ public class RequestsController : ControllerBase
         await _mediator.Send(command);
         return NoContent();
     }
-    
+
     [HttpPatch("reject")]
     [Authorize(Roles = "Client")]
     public async Task<IActionResult> RejectRequest([FromBody] RejectRequestCommand command)
     {
         await _mediator.Send(command);
         return NoContent();
+    }
+
+    [HttpGet("{id}/acceptanceAct")]
+    [Authorize]
+    public async Task<IActionResult> DownloadAcceptanceAct(Guid id)
+    {
+        var result = await _mediator.Send(new GetRequestDocumentsQuery()
+            { RequestId = id, Type = DocumentType.Acceptance });
+        return File(result.FileContents, result.ContentType, result.FileName);
+    }
+
+    [HttpGet("{requestId}/completionAct")]
+    [Authorize]
+    public async Task<IActionResult> DownloadCompletionAct(Guid requestId)
+    {
+        var result = await _mediator.Send(new GetRequestDocumentsQuery
+            { RequestId = requestId, Type = DocumentType.Completion });
+        return File(result.FileContents, result.ContentType, result.FileName);
+    }
+
+    [HttpGet("{requestId}/warrantyCard")]
+    [Authorize]
+    public async Task<IActionResult> DownloadWarrantyCard(Guid requestId)
+    {
+        var result = await _mediator.Send(new GetRequestDocumentsQuery
+            { RequestId = requestId, Type = DocumentType.Warranty });
+        return File(result.FileContents, result.ContentType, result.FileName);
     }
 }
