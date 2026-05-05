@@ -2,9 +2,9 @@ using MediatR;
 using SmartFix.Application.Common.Interfaces;
 using SmartFix.Application.Features.Statistics.DTO;
 
-namespace SmartFix.Application.Features.Statistics.Queries.GetGeneralStatistics;
+namespace SmartFix.Application.Features.Statistics.Queries.GetRequestsStatistics;
 
-public class GetGeneralStatisticsQuery:IRequest<GeneralStatsDto>,IDateRangeRequest
+public class GetRequestsStatisticsQuery:IRequest<RequestsStatsDto>
 {
     public string Period { get; set; } = "month"; 
     public DateTime? From { get; set; }

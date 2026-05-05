@@ -1,52 +1,35 @@
 namespace SmartFix.Application.Features.Statistics.DTO;
 
-public class GeneralStatsDto
+public class RequestsStatsDto
 {
-    public int NewRequestsCount { get; set; }
-    public int ClosedRequestsCount { get; set; }
-    public double AverageRating { get; set; } // CSAT
-    public double AvgRepairTimeHours { get; set; }
-    public List<DateValueDto> RequestsDynamics { get; set; } = new();
-    public List<LabelValueDto> StatusDistribution { get; set; } = new();
-}
-
-// 2. Услуги и Финансы
-public class ServicesStatsDto
-{
+    public int TotalRequests { get; set; }
+    public int ClosedRequests { get; set; }
+    public int CancelledRequests { get; set; }
     public decimal TotalRevenue { get; set; }
-    public List<LabelValueDto> RevenueByDeviceType { get; set; } = new();
-    public List<LabelValueDto> TopServices { get; set; } = new();
+    public decimal AverageCheck { get; set; }
+    public double AverageRepairTimeHours { get; set; }
+    
+    public Dictionary<string, int> RequestsByDay { get; set; } = new();
+    public Dictionary<string, int> RequestsByStatus { get; set; } = new();
+    public Dictionary<string, int> RequestsByType { get; set; } = new();
+    public Dictionary<string, int> RequestsByDeviceType { get; set; } = new();
 }
 
-// 3. Специалисты
-public class SpecialistsStatsDto
+public class ClientsStatsDto    
 {
-    public List<SpecialistPerformanceDto> Performance { get; set; } = new();
+    public int NewClientsCount { get; set; }
+    public int ReturningClientRequestsCount { get; set; }
+    public double AverageRating { get; set; }
+    
+    public Dictionary<int, int> RatingDistribution { get; set; } = new();
 }
 
-// 4. Клиенты
-public class ClientsStatsDto
+public class MastersStatsDto
 {
-    public int TotalClients { get; set; }
-    public int ReturningClientsCount { get; set; }
-}
+    public int ActiveMastersCount { get; set; }
+    public string TopMasterName { get; set; } = string.Empty;
+    public double AverageDiagnosticTimeHours { get; set; }
 
-public class DateValueDto
-{
-    public string Date { get; set; } // "20.10"
-    public int Value { get; set; }
-}
-
-public class LabelValueDto
-{
-    public string Label { get; set; }
-    public double Value { get; set; }
-}
-
-public class SpecialistPerformanceDto
-{
-    public string Name { get; set; }
-    public int ClosedCount { get; set; }
-    public int InProgressCount { get; set; }
-    public double AvgRepairTime { get; set; } // Личная скорость (часы)
+    public Dictionary<string, decimal> RevenueByMaster { get; set; } = new();
+    public Dictionary<string, double> RejectionRateByMaster { get; set; } = new();
 }

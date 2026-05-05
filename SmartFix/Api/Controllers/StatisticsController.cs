@@ -2,13 +2,14 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFix.Application.Features.Statistics.Queries.GetClientsStatistics;
-using SmartFix.Application.Features.Statistics.Queries.GetGeneralStatistics;
-using SmartFix.Application.Features.Statistics.Queries.GetServicesStatistics;
-using SmartFix.Application.Features.Statistics.Queries.GetSpecialistsStatistics;
+using SmartFix.Application.Features.Statistics.Queries.GetMastersStatistics;
+using SmartFix.Application.Features.Statistics.Queries.GetRequestsStatistics;
+using SmartFix.Application.Features.Statistics.Queries.PdfReport;
 
 namespace SmartFix.Api.Controllers;
 
 [Route("api/[controller]")]
+[Authorize(Roles = "Manager")]
 public class StatisticsController:ControllerBase
 {
     private readonly IMediator _mediator;
@@ -18,32 +19,27 @@ public class StatisticsController:ControllerBase
         _mediator = mediator;
     }
     
-    [HttpGet("general")]
-    [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> GetGeneralStatistics([FromQuery] GetGeneralStatisticsQuery query)
+    [HttpGet("requests")]
+    public async Task<IActionResult> GetRequestsStatistics([FromQuery] GetRequestsStatisticsQuery query)
     {
-        var result = await _mediator.Send(query);
-        return Ok(result);
+        return Ok(await _mediator.Send(query));
     }
-    [HttpGet("services")]
-    [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> GetServicesStatistics([FromQuery] GetServicesStatisticsQuery query)
-    {
-        var result = await _mediator.Send(query);
-        return Ok(result);
-    }
+
     [HttpGet("clients")]
-    [Authorize(Roles = "Manager")]
     public async Task<IActionResult> GetClientsStatistics([FromQuery] GetClientsStatisticsQuery query)
     {
-        var result = await _mediator.Send(query);
-        return Ok(result);
+        return Ok(await _mediator.Send(query));
     }
-    [HttpGet("specialists")]
-    [Authorize(Roles = "Manager")]
-    public async Task<IActionResult> GetSpecialistsStatistics([FromQuery] GetSpecialistsStatisticsQuery query)
+
+    [HttpGet("masters")]
+    public async Task<IActionResult> GetMastersStatistics([FromQuery] GetMastersStatisticsQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+    [HttpGet("report")]
+    public async Task<IActionResult> DownloadReportPdf([FromQuery] GetPdfReportQuery query)
     {
         var result = await _mediator.Send(query);
-        return Ok(result);
+        return File(result.FileContents, result.ContentType, result.FileName);
     }
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using SmartFix.Application.Features.Statistics.DTO;
 using SmartFix.Domain.Aggregates;
 
 namespace SmartFix.Application.Helpers;
@@ -215,6 +216,65 @@ public static class PdfDocsGenerator
             </tr>
         </table>
     ");
+
+        return sb.ToString();
+    }
+
+    public static string GenerateReportHtml(string periodText, RequestsStatsDto requestsKpis, ClientsStatsDto clientsStats, MastersStatsDto mastersStats)
+    {
+        var sb = new StringBuilder();
+
+        sb.Append(@"
+            <style>
+                body { font-family: Arial, sans-serif; font-size: 14px; color: #333; line-height: 1.6; }
+                h1 { text-align: center; color: #111827; margin-bottom: 5px; }
+                .subtitle { text-align: center; color: #6b7280; margin-bottom: 30px; font-size: 16px; }
+                h2 { border-bottom: 2px solid #3b82f6; color: #1e40af; padding-bottom: 5px; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+                th { background-color: #f9fafb; width: 60%; font-weight: normal; color: #4b5563; }
+                td { font-weight: bold; color: #111827; }
+                .revenue { color: #16a34a; font-size: 16px; }
+            </style>");
+
+        sb.Append("<h1>Сводный аналитический отчет о работе сервисного центра</h1>");
+        sb.Append($"<div class='subtitle'>Отчетный период: {periodText}<br/>Дата формирования: {DateTime.Now:dd.MM.yyyy HH:mm}</div>");
+
+        sb.Append("<h2>1. Заявки и финансовые показатели</h2>");
+        sb.Append("<table>");
+        sb.Append($"<tr><th>Всего поступило заявок:</th><td>{requestsKpis.TotalRequests} шт.</td></tr>");
+        sb.Append($"<tr><th>Успешно закрыто (выполнен ремонт):</th><td style='color: #16a34a;'>{requestsKpis.ClosedRequests} шт.</td></tr>");
+        sb.Append($"<tr><th>Отменено (отказы):</th><td style='color: #dc2626;'>{requestsKpis.CancelledRequests} шт.</td></tr>");
+        sb.Append($"<tr><th>Среднее время выполнения ремонта:</th><td>{requestsKpis.AverageRepairTimeHours} ч.</td></tr>");
+        sb.Append($"<tr><th>Средний чек:</th><td>{requestsKpis.AverageCheck:0.00} руб.</td></tr>");
+        sb.Append($"<tr><th>Общая выручка:</th><td class='revenue'>{requestsKpis.TotalRevenue:0.00} руб.</td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<h2>2. Клиенты и лояльность</h2>");
+        sb.Append("<table>");
+        sb.Append($"<tr><th>Новых клиентов за период:</th><td>{clientsStats.NewClientsCount} чел.</td></tr>");
+        sb.Append($"<tr><th>Заявок от постоянных клиентов (Retention):</th><td>{clientsStats.ReturningClientRequestsCount} шт.</td></tr>");
+        sb.Append($"<tr><th>Средняя оценка качества обслуживания:</th><td style='color: #d97706;'>★ {clientsStats.AverageRating:0.0} / 5.0</td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<h2>3. Эффективность персонала (Мастера)</h2>");
+        sb.Append("<table>");
+        sb.Append($"<tr><th>Задействовано мастеров в периоде:</th><td>{mastersStats.ActiveMastersCount} чел.</td></tr>");
+        sb.Append($"<tr><th>Топ-мастер (наибольшее кол-во ремонтов):</th><td>{mastersStats.TopMasterName}</td></tr>");
+        sb.Append($"<tr><th>Среднее время диагностики:</th><td>{mastersStats.AverageDiagnosticTimeHours} ч.</td></tr>");
+        sb.Append("</table>");
+
+        if (mastersStats.RevenueByMaster.Any())
+        {
+            sb.Append("<h3>Выручка в разрезе мастеров:</h3>");
+            sb.Append("<table>");
+            sb.Append("<tr><th style='background-color: #e5e7eb; font-weight: bold;'>ФИО Мастера</th><th style='background-color: #e5e7eb; font-weight: bold;'>Сгенерированная выручка</th></tr>");
+            foreach (var master in mastersStats.RevenueByMaster.OrderByDescending(x => x.Value))
+            {
+                sb.Append($"<tr><td style='font-weight: normal;'>{master.Key}</td><td>{master.Value:0.00} руб.</td></tr>");
+            }
+            sb.Append("</table>");
+        }
 
         return sb.ToString();
     }

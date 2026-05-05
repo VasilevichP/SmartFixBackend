@@ -15,144 +15,151 @@ public class StatisticsRepository : IStatisticsRepository
         _context = context;
     }
 
-    public async Task<GeneralStatsDto> LoadGeneralKpis(DateTime start, DateTime end, CancellationToken ct)
+
+    public async Task<RequestsStatsDto> LoadRequestsKpis(DateTime start, DateTime end,
+        CancellationToken cancellationToken)
     {
-        var stats = new GeneralStatsDto();
-        var query = _context.Requests.AsNoTracking().Where(r => r.CreatedAt >= start && r.CreatedAt <= end);
+        var baseQuery = _context.Requests.AsNoTracking().Where(r => r.CreatedAt >= start && r.CreatedAt <= end);
+        var closedQuery = baseQuery.Where(r => r.Status == RequestStatus.Closed);
 
-        stats.NewRequestsCount = await query.CountAsync(ct);
-        stats.ClosedRequestsCount = await _context.Requests.AsNoTracking()
-            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end).CountAsync();
+        int totalRequests = await baseQuery.CountAsync(cancellationToken);
+        int closedRequests = await closedQuery.CountAsync(cancellationToken);
+        int cancelledRequests = await baseQuery.CountAsync(r => r.Status == RequestStatus.Cancelled, cancellationToken);
+        decimal totalRevenue = await closedQuery.SumAsync(r => r.FinalPrice, cancellationToken);
 
-        var allReviews = _context.Reviews.AsNoTracking();
-        if (await allReviews.AnyAsync(ct))
+        var byStatus = await baseQuery.GroupBy(r => r.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+
+        var byType = await baseQuery.GroupBy(r => r.Type)
+            .Select(g => new { Type = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+
+        var byDeviceType = await baseQuery.GroupBy(r => r.DeviceType.Name)
+            .Select(g => new { Device = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+
+        var byDay = await baseQuery.GroupBy(r => r.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+
+        var repairTimes = await closedQuery.Select(r => new { r.CreatedAt, r.ClosedAt }).ToListAsync(cancellationToken);
+
+        double avgHours = 0;
+        if (repairTimes.Any())
         {
-            stats.AverageRating = Math.Round(await allReviews.AverageAsync(r => r.Rating, ct), 1);
+            avgHours = repairTimes.Average(r => (r.ClosedAt!.Value - r.CreatedAt).TotalHours);
         }
 
-        var closedRequests = await _context.Requests.AsNoTracking()
-            .Where(r => r.ClosedAt >= start && r.ClosedAt <= end)
-            .Select(r => new { Start = r.CreatedAt, End = r.ClosedAt.Value })
-            .ToListAsync(ct);
-
-        if (closedRequests.Any())
+        return new RequestsStatsDto
         {
-            double totalHours = closedRequests.Sum(r => (r.End - r.Start).TotalHours);
-            stats.AvgRepairTimeHours = Math.Round(totalHours / closedRequests.Count, 1);
-        }
+            TotalRequests = totalRequests,
+            ClosedRequests = closedRequests,
+            CancelledRequests = cancelledRequests,
+            TotalRevenue = totalRevenue,
+            AverageCheck = closedRequests > 0 ? totalRevenue / closedRequests : 0,
+            AverageRepairTimeHours = Math.Round(avgHours, 1),
 
-        var dynamics = await query
-            .GroupBy(r => r.CreatedAt.Date)
-            .Select(g => new { Date = g.Key, Count = g.Count() })
-            .OrderBy(x => x.Date)
-            .ToListAsync(ct);
-        stats.RequestsDynamics = dynamics
-            .Select(d => new DateValueDto { Date = d.Date.ToString("dd.MM"), Value = d.Count }).ToList();
-
-        var statusData = await _context.Requests.AsNoTracking()
-            .GroupBy(r => r.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToListAsync(ct);
-
-        stats.StatusDistribution = statusData.Select(s => new LabelValueDto
-        {
-            Label = s.Status.ToString(),
-            Value = s.Count
-        }).ToList();
-
-
-        return stats;
+            RequestsByStatus = byStatus.ToDictionary(x => x.Status.ToString(), x => x.Count),
+            RequestsByType = byType.ToDictionary(x => x.Type.ToString(), x => x.Count),
+            RequestsByDeviceType = byDeviceType.ToDictionary(x => x.Device ?? "Неизвестно", x => x.Count),
+            RequestsByDay = byDay.ToDictionary(x => x.Date.ToString("yyyy-MM-dd"), x => x.Count)
+        };
     }
-    
-    public async Task<Dictionary<DateTime, int>> GetDailyRequestsCountAsync(DateTime start, DateTime end, CancellationToken ct)
+
+    public async Task<ClientsStatsDto> LoadClientStats(DateTime start, DateTime end,
+        CancellationToken cancellationToken)
     {
-        return await _context.Requests
+        var newClientsCount = await _context.Requests
             .AsNoTracking()
             .Where(r => r.CreatedAt >= start && r.CreatedAt <= end)
-            .GroupBy(r => r.CreatedAt.Date)
-            .Select(g => new { Date = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.Date, x => x.Count, ct);
+            .Select(r => r.ClientId)
+            .Distinct()
+            .CountAsync(clientId => !_context.Requests.Any(old => old.ClientId == clientId && old.CreatedAt < start),
+                cancellationToken);
+
+        var returningRequestsCount = await _context.Requests
+            .AsNoTracking()
+            .Where(r => r.CreatedAt >= start && r.CreatedAt <= end)
+            .CountAsync(
+                r => _context.Requests.Count(all => all.ClientId == r.ClientId && all.Status == RequestStatus.Closed) >
+                     1, cancellationToken);
+
+        var reviewsInPeriod = _context.Reviews.AsNoTracking();
+
+        double avgRating = await reviewsInPeriod.AnyAsync(cancellationToken)
+            ? await reviewsInPeriod.AverageAsync(r => r.Rating, cancellationToken)
+            : 0.0;
+
+        var distribution = await reviewsInPeriod.GroupBy(r => r.Rating)
+            .Select(g => new { Rating = g.Key, Count = g.Count() }).ToListAsync(cancellationToken);
+
+        return new ClientsStatsDto
+        {
+            NewClientsCount = newClientsCount,
+            ReturningClientRequestsCount = returningRequestsCount,
+            AverageRating = Math.Round(avgRating, 2),
+            RatingDistribution = distribution.ToDictionary(x => x.Rating, x => x.Count)
+        };
     }
 
-    public async Task<ServicesStatsDto> LoadServicesStats(DateTime start, DateTime end, CancellationToken ct)
+    public async Task<MastersStatsDto> LoadMasterStats(DateTime start, DateTime end,
+        CancellationToken cancellationToken)
     {
-        var stats = new ServicesStatsDto();
+        var requestsInPeriod = _context.Requests.AsNoTracking()
+            .Include(r => r.Master)
+            .Where(r => r.CreatedAt >= start && r.CreatedAt <= end && r.MasterId != null);
 
-        // var totalRevenue = await _context.Requests
-        //     .AsNoTracking()
-        //     .Where(r => r.ClosedAt >= start && r.ClosedAt <= end && r.Price != null)
-        //     .SumAsync(r => r.Price);
-        // stats.TotalRevenue = totalRevenue;
-        //
-        // var deviceData = await _context.Requests
-        //     .GroupBy(r => r.DeviceType.Name)
-        //     .Select(g => new { Type = g.Key, Revenue = g.Sum(r => r.Price) })
-        //     .ToListAsync(ct);
-        // stats.RevenueByDeviceType =
-        //     deviceData.Select(d => new LabelValueDto { Label = d.Type, Value = (double)d.Revenue }).ToList();
+        var revenueData = await requestsInPeriod
+            .Where(r => r.Status == RequestStatus.Closed)
+            .GroupBy(r => new { r.MasterId, r.Master.Name })
+            .Select(g => new
+            {
+                MasterName = g.Key.Name,
+                TotalRevenue = g.Sum(r => r.FinalPrice),
+                ClosedCount = g.Count()
+            })
+            .ToListAsync(cancellationToken);
 
-        return stats;
-    }
+        var topMaster = revenueData.OrderByDescending(x => x.ClosedCount).FirstOrDefault();
 
-    public async Task<ClientsStatsDto> LoadClientStats(DateTime start, DateTime end, CancellationToken ct)
-    {
-        var stats = new ClientsStatsDto();
-        // stats.TotalClients = await _context.Clients.CountAsync(u => u.Role == Role.Client, ct);
-        //
-        // var returningClients = await _context.Requests
-        //     .AsNoTracking()
-        //     .GroupBy(r => r.ClientId)
-        //     .Where(g => g.Count() > 1)
-        //     .CountAsync(ct);
-        //
-        // stats.ReturningClientsCount = returningClients;
+        var rejectionData = await requestsInPeriod
+            .Where(r => r.Status == RequestStatus.Closed || r.Status == RequestStatus.Cancelled)
+            .GroupBy(r => r.Master.Name)
+            .Select(g => new
+            {
+                MasterName = g.Key,
+                TotalHandled = g.Count(),
+                CancelledCount = g.Count(r => r.Status == RequestStatus.Cancelled)
+            })
+            .ToListAsync(cancellationToken);
 
-        return stats;
-    }
+        var rejectionRateDict = rejectionData.ToDictionary(
+            x => x.MasterName!,
+            x => Math.Round((double)x.CancelledCount / x.TotalHandled * 100, 1)
+        );
 
-    public async Task<SpecialistsStatsDto> LoadSpecialistStats(DateTime start, DateTime end, CancellationToken ct)
-    {
-        var stats = new SpecialistsStatsDto();
-        // var specialists = await _context.Specialists
-        //     .AsNoTracking()
-        //     .ToListAsync(ct);
-        //
-        // var resultList = new List<SpecialistPerformanceDto>();
-        //
-        // foreach (var spec in specialists)
-        // {
-        //     var specRequests = _context.Requests
-        //         .AsNoTracking()
-        //         .Where(r => r.MasterId == spec.Id && r.ClosedAt >= start && r.ClosedAt <= end);
-        //     var closedCount = await specRequests
-        //         .CountAsync(ct);
-        //
-        //     var activeCount = await _context.Requests
-        //         .CountAsync(r => r.MasterId == spec.Id
-        //                          && r.Status != RequestStatus.Closed
-        //                          && r.Status != RequestStatus.Cancelled, ct);
-        //
-        //     double avgTime = 0;
-        //
-        //     if (closedCount > 0)
-        //     {
-        //         avgTime = await specRequests
-        //             .AverageAsync(r => EF.Functions.DateDiffHour(r.CreatedAt, r.ClosedAt.Value), ct);
-        //     }
-        //
-        //     resultList.Add(new SpecialistPerformanceDto
-        //     {
-        //         Name = spec.Name,
-        //         ClosedCount = closedCount,
-        //         InProgressCount = activeCount,
-        //         AvgRepairTime = Math.Round(avgTime, 1)
-        //     });
-        // }
-        //
-        // stats.Performance = resultList
-        //     .OrderByDescending(x => x.ClosedCount)
-        //     .ToList();
+        var diagTimes = await requestsInPeriod
+            .Where(r => r.DiagnosticResult != null)
+            .Select(r => new
+            {
+                Start = r.CreatedAt,
+                End = r.StatusHistories
+                    .Where(h => h.Status == RequestStatus.Pending || h.Status == RequestStatus.InProgress)
+                    .Select(h => h.Timestamp).FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
 
-        return stats;
+        double avgDiagTime = 0;
+        var validDiagTimes = diagTimes.Where(x => x.End != default).ToList();
+        if (validDiagTimes.Any())
+        {
+            avgDiagTime = validDiagTimes.Average(x => (x.End - x.Start).TotalHours);
+        }
+
+        return new MastersStatsDto
+        {
+            ActiveMastersCount = revenueData.Count,
+            TopMasterName = topMaster?.MasterName ?? "Нет данных",
+            AverageDiagnosticTimeHours = Math.Round(avgDiagTime, 1),
+            RevenueByMaster = revenueData.ToDictionary(x => x.MasterName!, x => x.TotalRevenue),
+            RejectionRateByMaster = rejectionRateDict
+        };
     }
 }
