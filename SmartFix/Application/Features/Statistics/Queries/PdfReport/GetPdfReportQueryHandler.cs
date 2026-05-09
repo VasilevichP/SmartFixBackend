@@ -39,7 +39,8 @@ public class GetPdfReportQueryHandler:IRequestHandler<GetPdfReportQuery, Documen
         converter.Options.MarginBottom = 20;
         converter.Options.MarginLeft = 20;
         converter.Options.MarginRight = 20;
-
+        
+        converter.Options.MinPageLoadTime = 5;
         PdfDocument doc = converter.ConvertHtmlString(htmlContent);
         
         byte[] pdfBytes;

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartFix.Application.Features.Chats.Queries.GetChatHistory;
 using SmartFix.Application.Features.Clients.Commands.CreateProfileByManager;
 using SmartFix.Application.Features.Clients.Commands.UpdateProfileByClient;
 using SmartFix.Application.Features.Clients.Commands.UpdateProfileByManager;
